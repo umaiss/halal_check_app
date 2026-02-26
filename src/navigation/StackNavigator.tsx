@@ -3,11 +3,22 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
 import { RootStackParamList } from './types/RootParamList';
 import BottomTabNavigator from './BottomTabNavigator';
-import { Settings } from '../screens';
+import { Settings, IngredientsResult, Onboarding, Scan, Login, Signup, Upload } from '../screens';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-function StackNavigator() {
+import { useSelector } from 'react-redux';
+import { RootState } from '../redux/store';
+
+// Props passed from App.tsx
+interface StackNavigatorProps {
+    isOnboardingCompleted: boolean;
+}
+
+function StackNavigator({ isOnboardingCompleted }: StackNavigatorProps) {
+    const { token } = useSelector((state: RootState) => state.auth);
+    const isAuthenticated = !!token;
+
     return (
         <NavigationContainer>
             <Stack.Navigator
@@ -15,16 +26,63 @@ function StackNavigator() {
                     headerShown: false,
                 }}
             >
-                <Stack.Screen
-                    name="MainTabs"
-                    component={BottomTabNavigator}
-                // options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                    name="Settings"
-                    component={Settings}
-                    options={{ title: 'Settings' }}
-                />
+                {isAuthenticated ? (
+                    // App Stack
+                    <>
+                        <Stack.Screen
+                            name="MainTabs"
+                            component={BottomTabNavigator}
+                        />
+                        <Stack.Screen
+                            name="Settings"
+                            component={Settings}
+                            options={{ title: 'Settings' }}
+                        />
+                        <Stack.Screen
+                            name="IngredientsResult"
+                            component={IngredientsResult}
+                            options={{
+                                title: 'Ingredients',
+                                headerShown: false,
+                            }}
+                        />
+                        <Stack.Screen
+                            name="Scan"
+                            component={Scan}
+                            options={{
+                                title: 'Scan',
+                                headerShown: false,
+                            }}
+                        />
+                        <Stack.Screen
+                            name="Upload"
+                            component={Upload}
+                            options={{ headerShown: false }}
+                        />
+                    </>
+                ) : (
+                    // Auth Stack
+                    <>
+                        {!isOnboardingCompleted && (
+                            <Stack.Screen
+                                name="Onboarding"
+                                component={Onboarding}
+                                options={{ headerShown: false }}
+                            />
+                        )}
+                        <Stack.Screen
+                            name="Login"
+                            component={Login}
+                            options={{ headerShown: false }}
+                        />
+                        <Stack.Screen
+                            name="Signup"
+                            component={Signup}
+                            options={{ headerShown: false }}
+                        />
+
+                    </>
+                )}
             </Stack.Navigator>
         </NavigationContainer>
     );

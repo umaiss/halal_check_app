@@ -1,10 +1,10 @@
 import { StyleSheet } from 'react-native';
 import { height, width } from '../../utils/dimensions';
-import { AppColors } from '../../utils';
+import Theme from '../../theme/theme';
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: AppColors.white,
+        backgroundColor: Theme.color.COLOR_WHITE,
         marginBottom: height(2),
         overflow: "hidden",
         width: '100%',
@@ -12,8 +12,8 @@ const styles = StyleSheet.create({
 
     },
     input: {
-        backgroundColor: AppColors.transparent,
-        color: AppColors.black,
+        backgroundColor: 'transparent',
+        color: Theme.color.COLOR_TEXT,
         fontSize: width(4.2),
         height: '100%',
         marginLeft: height(1),
@@ -21,11 +21,11 @@ const styles = StyleSheet.create({
     },
     inputContainer: {
         alignItems: "center",
-        backgroundColor: AppColors.white,
-        borderColor: AppColors.borderColor,
+        backgroundColor: Theme.color.COLOR_WHITE,
+        borderColor: Theme.color.COLOR_STROKE,
         borderRadius: width(100),
         borderWidth: width(0.3),
-        color: AppColors.black,
+        color: Theme.color.COLOR_TEXT,
         flexDirection: "row",
         height: height(6.5),
         justifyContent: "space-between",

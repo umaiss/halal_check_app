@@ -4,12 +4,14 @@ export const PhoneRegex = /^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$/;
 export const EmailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 export const NameRegex = /^[A-Za-z]+(?: [A-Za-z]+)*$/
 
-export const BASE_URL = 'https://dummyjson.com';
+// export const BASE_URL = 'https://halal-check-backend-production.up.railway.app';
+export const BASE_URL = 'http://192.168.18.90:3000';
+// export const BASE_URL = 'http://192.168.4.50:3000';
 
 export const API_ENDPOINTS = {
-    LOGIN: "/auth/login",
-    REGISTER: "/auth/register",
-    PROFILE: "/user/profile",
-    USERS: "/users",
-    PRODUCTS: "/products",
+    LOGIN: "api/auth/login",
+    REGISTER: "api/auth/signup",
+
+    // PRODUCTS: "/products",
+    HALAL_CHECK: "/api/check-halal",
 };

@@ -1,12 +1,21 @@
 export type RootStackParamList = {
+    Onboarding: undefined;
     MainTabs: undefined;
     Profile: { userId: string };
     Settings: undefined;
+    IngredientsResult: {
+        ingredients: string;
+        imageUri: string;
+        halalCheckResult?: any; // Pre-loaded result from history
+    };
+    Scan: undefined;
+    Login: undefined;
+    Signup: undefined;
+    Upload: undefined;
 };
 
 export type BottomTabParamList = {
     Home: undefined;
-    Search: undefined;
-    Notifications: undefined;
+    History: undefined;
     Profile: undefined;
 };

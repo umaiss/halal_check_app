@@ -1,0 +1,249 @@
+import React, { useState } from 'react';
+import {
+    View,
+    TouchableOpacity,
+    Image,
+    Alert,
+    Platform,
+    ScrollView,
+    ActivityIndicator,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { launchImageLibrary, launchCamera, Asset } from 'react-native-image-picker';
+import TextRecognition from 'react-native-text-recognition';
+import Icon from 'react-native-vector-icons/Ionicons';
+import { RootStackParamList } from '../../navigation/types/RootParamList';
+import { SmallText } from '../../components/text';
+import Theme from '../../theme/theme';
+import { styles } from './styles';
+
+type UploadScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Upload'>;
+
+type ImageType = 'front' | 'back' | 'ingredients';
+
+const Upload = () => {
+    const navigation = useNavigation<UploadScreenNavigationProp>();
+    const [frontImage, setFrontImage] = useState<Asset | null>(null);
+    const [backImage, setBackImage] = useState<Asset | null>(null);
+    const [ingredientsImage, setIngredientsImage] = useState<Asset | null>(null);
+    const [isProcessing, setIsProcessing] = useState(false);
+
+    const handleImageSelection = async (type: ImageType, source: 'camera' | 'gallery') => {
+        const options: any = {
+            mediaType: 'photo',
+            quality: 0.8,
+            selectionLimit: 1,
+        };
+
+        try {
+            const result = source === 'camera'
+                ? await launchCamera(options)
+                : await launchImageLibrary(options);
+
+            if (result.didCancel) return;
+            if (result.errorCode) {
+                Alert.alert('Error', result.errorMessage || 'Failed to select image');
+                return;
+            }
+
+            if (result.assets && result.assets.length > 0) {
+                const asset = result.assets[0];
+                switch (type) {
+                    case 'front':
+                        setFrontImage(asset);
+                        break;
+                    case 'back':
+                        setBackImage(asset);
+                        break;
+                    case 'ingredients':
+                        setIngredientsImage(asset);
+                        break;
+                }
+            }
+        } catch (error) {
+            console.error('Error selecting image:', error);
+            Alert.alert('Error', 'Failed to process image selection');
+        }
+    };
+
+    const showImageOptions = (type: ImageType) => {
+        Alert.alert(
+            'Select Image',
+            'Choose an option',
+            [
+                {
+                    text: 'Take Photo',
+                    onPress: () => handleImageSelection(type, 'camera'),
+                },
+                {
+                    text: 'Choose from Gallery',
+                    onPress: () => handleImageSelection(type, 'gallery'),
+                },
+                {
+                    text: 'Cancel',
+                    style: 'cancel',
+                },
+            ]
+        );
+    };
+
+    const processImageWithTextRecognition = async (imagePath: string) => {
+        try {
+            console.log('Processing image:', imagePath);
+            const result: any = await TextRecognition.recognize(imagePath);
+
+            let extractedText = '';
+
+            if (result && result.text) {
+                extractedText = result.text.trim();
+            } else if (result && result.blocks && Array.isArray(result.blocks) && result.blocks.length > 0) {
+                extractedText = result.blocks
+                    .map((block: any) => {
+                        if (typeof block === 'string') return block;
+                        return block.text || block.blockText || '';
+                    })
+                    .filter((text: string) => text && text.length > 0)
+                    .join(' ');
+            }
+
+            if (extractedText.length > 0) {
+                return extractedText
+                    .replace(/\s+/g, ' ')
+                    .replace(/\n+/g, ' ')
+                    .trim();
+            }
+
+            return null;
+        } catch (error) {
+            console.error('Error processing image with text recognition:', error);
+            throw error;
+        }
+    };
+
+    const handleProcess = async () => {
+        if (!ingredientsImage?.uri) {
+            Alert.alert('Required', 'Please upload or capture the ingredients image.');
+            return;
+        }
+
+        setIsProcessing(true);
+        try {
+            const imagePath = Platform.OS === 'android'
+                ? ingredientsImage.uri
+                : ingredientsImage.uri.replace('file://', '');
+
+            const extractedText = await processImageWithTextRecognition(imagePath);
+
+            if (extractedText) {
+                navigation.navigate('IngredientsResult', {
+                    ingredients: extractedText,
+                    imageUri: ingredientsImage.uri,
+                });
+            } else {
+                Alert.alert('No Text Detected', 'Could not detect text in the ingredients image. Please try again with a clearer image.');
+            }
+        } catch (error) {
+            console.error('Error processing ingredients:', error);
+            Alert.alert('Error', 'Failed to process ingredients image. Please try again.');
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const renderImageButton = (type: ImageType, image: Asset | null, label: string, required: boolean = false) => (
+        <TouchableOpacity
+            style={styles.imageButton}
+            onPress={() => showImageOptions(type)}
+            activeOpacity={0.8}
+        >
+            {image?.uri ? (
+                <Image source={{ uri: image.uri }} style={styles.previewImage} />
+            ) : (
+                <View style={styles.placeholderContainer}>
+                    <Icon name="camera-outline" size={32} color={Theme.color.COLOR_BLUE} />
+                    <SmallText
+                        size={3.5}
+                        color={Theme.color.COLOT_SUBTEXT}
+                        textStyles={styles.placeholderText}
+                    >
+                        {label} {required && '(Required)'}
+                    </SmallText>
+                </View>
+            )}
+            {image && (
+                <View style={styles.editIconContainer}>
+                    <Icon name="pencil" size={16} color={Theme.color.COLOR_WHITE} />
+                </View>
+            )}
+        </TouchableOpacity>
+    );
+
+    return (
+        <View style={styles.container}>
+            <View style={styles.header}>
+                <TouchableOpacity
+                    onPress={() => navigation.goBack()}
+                    style={styles.backButton}
+                >
+                    <Icon name="arrow-back" size={24} color={Theme.color.COLOR_TEXT} />
+                </TouchableOpacity>
+                <SmallText
+                    size={5}
+                    fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}
+                    color={Theme.color.COLOR_TEXT}
+                >
+                    Upload Images
+                </SmallText>
+            </View>
+
+            <ScrollView contentContainerStyle={styles.content}>
+                <SmallText
+                    size={3.5}
+                    color={Theme.color.COLOT_SUBTEXT}
+                    textStyles={styles.description}
+                >
+                    Please upload photos of the product. The ingredients photo is required for halal verification.
+                </SmallText>
+
+                <View style={styles.gridContainer}>
+                    {renderImageButton('front', frontImage, 'Front Image')}
+                    {renderImageButton('back', backImage, 'Back Image')}
+                </View>
+
+                <View style={styles.fullWidthContainer}>
+                    {renderImageButton('ingredients', ingredientsImage, 'Ingredients Image', true)}
+                </View>
+            </ScrollView>
+
+            <View style={styles.footer}>
+                <TouchableOpacity
+                    style={[
+                        styles.processButton,
+                        (!ingredientsImage || isProcessing) && styles.processButtonDisabled
+                    ]}
+                    onPress={handleProcess}
+                    disabled={!ingredientsImage || isProcessing}
+                >
+                    {isProcessing ? (
+                        <ActivityIndicator color={Theme.color.COLOR_WHITE} />
+                    ) : (
+                        <>
+                            <Icon name="checkmark-circle" size={24} color={Theme.color.COLOR_WHITE} />
+                            <SmallText
+                                size={4}
+                                fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}
+                                color={Theme.color.COLOR_WHITE}
+                                textStyles={styles.buttonText}
+                            >
+                                Check Ingredients
+                            </SmallText>
+                        </>
+                    )}
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
+};
+
+export default Upload;
