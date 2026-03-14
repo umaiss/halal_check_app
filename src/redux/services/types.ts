@@ -32,6 +32,9 @@ export interface UpdateUserRequest {
 // Halal Check
 export interface HalalCheckRequest {
     text: string;
+    front_image?: string;
+    back_image?: string;
+    ingredients_image?: string;
 }
 
 export interface IngredientStatus {

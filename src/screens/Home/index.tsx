@@ -14,12 +14,12 @@ import { CompositeNavigationProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { launchImageLibrary } from 'react-native-image-picker';
-import TextRecognition from 'react-native-text-recognition';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import { SmallText } from '../../components/text';
 import Theme from '../../theme/theme';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { RootStackParamList, BottomTabParamList } from '../../navigation/types/RootParamList';
+import TextRecognition from '@react-native-ml-kit/text-recognition';
 
 type HomeNavigationProp = CompositeNavigationProp<
     BottomTabNavigationProp<BottomTabParamList, 'Home'>,

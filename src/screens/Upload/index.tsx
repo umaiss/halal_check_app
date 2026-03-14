@@ -11,12 +11,13 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { launchImageLibrary, launchCamera, Asset } from 'react-native-image-picker';
-import TextRecognition from 'react-native-text-recognition';
+import TextRecognition from '@react-native-ml-kit/text-recognition';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { RootStackParamList } from '../../navigation/types/RootParamList';
 import { SmallText } from '../../components/text';
 import Theme from '../../theme/theme';
 import { styles } from './styles';
+import { uploadImageToSupabase } from '../../utils/imageUpload';
 
 type UploadScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Upload'>;
 
@@ -91,24 +92,10 @@ const Upload = () => {
     const processImageWithTextRecognition = async (imagePath: string) => {
         try {
             console.log('Processing image:', imagePath);
-            const result: any = await TextRecognition.recognize(imagePath);
-
-            let extractedText = '';
+            const result = await TextRecognition.recognize(imagePath);
 
             if (result && result.text) {
-                extractedText = result.text.trim();
-            } else if (result && result.blocks && Array.isArray(result.blocks) && result.blocks.length > 0) {
-                extractedText = result.blocks
-                    .map((block: any) => {
-                        if (typeof block === 'string') return block;
-                        return block.text || block.blockText || '';
-                    })
-                    .filter((text: string) => text && text.length > 0)
-                    .join(' ');
-            }
-
-            if (extractedText.length > 0) {
-                return extractedText
+                return result.text
                     .replace(/\s+/g, ' ')
                     .replace(/\n+/g, ' ')
                     .trim();
@@ -121,6 +108,7 @@ const Upload = () => {
         }
     };
 
+
     const handleProcess = async () => {
         if (!ingredientsImage?.uri) {
             Alert.alert('Required', 'Please upload or capture the ingredients image.');
@@ -129,6 +117,26 @@ const Upload = () => {
 
         setIsProcessing(true);
         try {
+            // Upload images to Supabase
+            let frontUrl = '';
+            let backUrl = '';
+            let ingredientsUrl = '';
+
+            if (frontImage?.uri) {
+                console.log('Uploading front image...');
+                frontUrl = await uploadImageToSupabase(frontImage.uri);
+            }
+
+            if (backImage?.uri) {
+                console.log('Uploading back image...');
+                backUrl = await uploadImageToSupabase(backImage.uri);
+            }
+
+            if (ingredientsImage?.uri) {
+                console.log('Uploading ingredients image...');
+                ingredientsUrl = await uploadImageToSupabase(ingredientsImage.uri);
+            }
+
             const imagePath = Platform.OS === 'android'
                 ? ingredientsImage.uri
                 : ingredientsImage.uri.replace('file://', '');
@@ -138,7 +146,10 @@ const Upload = () => {
             if (extractedText) {
                 navigation.navigate('IngredientsResult', {
                     ingredients: extractedText,
-                    imageUri: ingredientsImage.uri,
+                    imageUri: ingredientsImage.uri, // still pass local URI for preview
+                    frontImage: frontUrl || undefined,
+                    backImage: backUrl || undefined,
+                    ingredientsImage: ingredientsUrl,
                 });
             } else {
                 Alert.alert('No Text Detected', 'Could not detect text in the ingredients image. Please try again with a clearer image.');
@@ -150,6 +161,7 @@ const Upload = () => {
             setIsProcessing(false);
         }
     };
+
 
     const renderImageButton = (type: ImageType, image: Asset | null, label: string, required: boolean = false) => (
         <TouchableOpacity

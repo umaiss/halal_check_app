@@ -16,7 +16,7 @@ type IngredientsResultNavigationProp = NativeStackNavigationProp<RootStackParamL
 function IngredientsResult() {
     const navigation = useNavigation<IngredientsResultNavigationProp>();
     const route = useRoute<IngredientsResultRouteProp>();
-    const { ingredients, imageUri, halalCheckResult } = route.params;
+    const { ingredients, imageUri, halalCheckResult, frontImage, backImage, ingredientsImage } = route.params;
 
     // API hook for halal check
     const [halalCheck, { data: halalCheckResultFromAPI, isLoading: isCheckingHalal, error: halalCheckError }] = useHalalCheckMutation();
@@ -82,7 +82,7 @@ function IngredientsResult() {
     }, []);
 
     // Format data for API request
-    const formatDataForAPI = (text: string) => {
+    const formatDataForAPI = (text: string, front?: string, back?: string, ingredientsImg?: string) => {
         // Clean the text
         const cleanedText = text
             .replace(/\s+/g, ' ') // Replace multiple spaces with single space
@@ -92,6 +92,9 @@ function IngredientsResult() {
         // Prepare data in a format suitable for API
         const apiData = {
             text: cleanedText,
+            front_image: front,
+            back_image: back,
+            ingredients_image: ingredientsImg,
         };
 
         return apiData;
@@ -101,7 +104,7 @@ function IngredientsResult() {
     const handleHalalCheck = async () => {
         try {
             // Format the data before sending
-            const formattedData = formatDataForAPI(ingredients);
+            const formattedData = formatDataForAPI(ingredients, frontImage, backImage, ingredientsImage);
 
             console.log('Sending data to API:', JSON.stringify(formattedData, null, 2));
 

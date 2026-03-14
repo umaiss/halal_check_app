@@ -5,7 +5,10 @@ export type RootStackParamList = {
     Settings: undefined;
     IngredientsResult: {
         ingredients: string;
-        imageUri: string;
+        imageUri?: string;
+        frontImage?: string;
+        backImage?: string;
+        ingredientsImage?: string;
         halalCheckResult?: any; // Pre-loaded result from history
     };
     Scan: undefined;

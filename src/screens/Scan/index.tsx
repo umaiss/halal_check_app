@@ -7,16 +7,13 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 // 1. Core Camera components
 import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
 // 2. Text Recognition - using ML Kit for static image processing
-import TextRecognition from 'react-native-text-recognition';
 // 3. Navigation types
 import { RootStackParamList, BottomTabParamList } from '../../navigation/types/RootParamList';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Theme from '../../theme/theme';
+import TextRecognition from '@react-native-ml-kit/text-recognition';
 
-type ScanNavigationProp = CompositeNavigationProp<
-    BottomTabNavigationProp<BottomTabParamList, 'Scan'>,
-    NativeStackNavigationProp<RootStackParamList>
->;
+type ScanNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Scan'>;
 
 function Scan() {
     const navigation = useNavigation<ScanNavigationProp>();
@@ -43,35 +40,17 @@ function Scan() {
 
             // Process the image file with ML Kit Text Recognition
             const result = await TextRecognition.recognize(imagePath);
-            // const result = null
 
             console.log('Text Recognition Result:', JSON.stringify(result, null, 2));
 
-            // Extract text from result
-            let extractedText = '';
-
             if (result && result.text) {
-                // ML Kit returns text directly
-                extractedText = result.text.trim();
-            } else if (result && result.blocks && Array.isArray(result.blocks) && result.blocks.length > 0) {
-                // Extract text from blocks if text property doesn't exist
-                extractedText = result.blocks
-                    .map((block: any) => {
-                        if (typeof block === 'string') return block;
-                        return block.text || block.blockText || '';
-                    })
-                    .filter((text: string) => text && text.length > 0)
-                    .join(' ');
-            }
-
-            if (extractedText.length > 0) {
                 // Clean and format the extracted text
-                const cleanedText = extractedText
+                const cleanedText = result.text
                     .replace(/\s+/g, ' ') // Replace multiple spaces with single space
                     .replace(/\n+/g, ' ') // Replace newlines with space
                     .trim(); // Remove leading/trailing whitespace
 
-                console.log("Raw extracted text:", extractedText);
+                console.log("Raw extracted text:", result.text);
                 console.log("Cleaned extracted text:", cleanedText);
 
                 return cleanedText;

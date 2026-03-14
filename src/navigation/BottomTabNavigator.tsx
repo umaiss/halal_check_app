@@ -62,7 +62,7 @@ function BottomTabNavigator() {
             />
             <Tab.Screen
                 name="Profile"
-                component={Login}
+                component={Profile}
                 options={{ title: 'Profile' }}
             />
         </Tab.Navigator>
