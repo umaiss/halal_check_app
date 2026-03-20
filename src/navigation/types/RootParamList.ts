@@ -5,11 +5,13 @@ export type RootStackParamList = {
     Settings: undefined;
     IngredientsResult: {
         ingredients: string;
+        ingredients_hash: string;
         imageUri?: string;
         frontImage?: string;
         backImage?: string;
         ingredientsImage?: string;
         halalCheckResult?: any; // Pre-loaded result from history
+        chatgpt_result?: any;   // Used when we load a cached record from DB
     };
     Scan: undefined;
     Login: undefined;

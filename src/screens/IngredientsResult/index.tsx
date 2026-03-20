@@ -5,7 +5,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types/RootParamList';
 import { SmallText } from '../../components/text';
 import Theme from '../../theme/theme';
-import { useHalalCheckMutation } from '../../redux/authApi/authApi';
+import { useHalalCheckMutation } from '../../redux/scanApi/scanApi';
 import { HalalCheckResponse, IngredientStatus } from '../../redux/services/types';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { scanHistoryStorage } from '../../utils/scanHistoryStorage';
@@ -82,7 +82,7 @@ function IngredientsResult() {
     }, []);
 
     // Format data for API request
-    const formatDataForAPI = (text: string, front?: string, back?: string, ingredientsImg?: string) => {
+    const formatDataForAPI = (text: string, hash: string, front?: string, back?: string, ingredientsImg?: string) => {
         // Clean the text
         const cleanedText = text
             .replace(/\s+/g, ' ') // Replace multiple spaces with single space
@@ -92,6 +92,7 @@ function IngredientsResult() {
         // Prepare data in a format suitable for API
         const apiData = {
             text: cleanedText,
+            ingredients_hash: hash,
             front_image: front,
             back_image: back,
             ingredients_image: ingredientsImg,
@@ -104,7 +105,7 @@ function IngredientsResult() {
     const handleHalalCheck = async () => {
         try {
             // Format the data before sending
-            const formattedData = formatDataForAPI(ingredients, frontImage, backImage, ingredientsImage);
+            const formattedData = formatDataForAPI(ingredients, route.params.ingredients_hash, frontImage, backImage, ingredientsImage);
 
             console.log('Sending data to API:', JSON.stringify(formattedData, null, 2));
 

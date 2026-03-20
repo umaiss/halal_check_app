@@ -18,6 +18,7 @@ import { SmallText } from '../../components/text';
 import Theme from '../../theme/theme';
 import { styles } from './styles';
 import { uploadImageToSupabase } from '../../utils/imageUpload';
+import CryptoJS from 'crypto-js';
 
 type UploadScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Upload'>;
 
@@ -117,39 +118,51 @@ const Upload = () => {
 
         setIsProcessing(true);
         try {
-            // Upload images to Supabase
-            let frontUrl = '';
-            let backUrl = '';
-            let ingredientsUrl = '';
+            // Create an array of promises for parallel execution
+            const uploadPromises: Promise<string>[] = [];
 
-            if (frontImage?.uri) {
-                console.log('Uploading front image...');
-                frontUrl = await uploadImageToSupabase(frontImage.uri);
-            }
+            // Helper to handle safe upload
+            const safeUpload = async (uri: string | undefined): Promise<string> => {
+                if (!uri) return '';
+                try {
+                    return await uploadImageToSupabase(uri);
+                } catch (e) {
+                    console.error('Failed to upload image:', e);
+                    return ''; // Default to empty string on failure instead of crashing the whole flow
+                }
+            };
 
-            if (backImage?.uri) {
-                console.log('Uploading back image...');
-                backUrl = await uploadImageToSupabase(backImage.uri);
-            }
+            // Queue up uploads concurrently
+            const frontUploadPromise = safeUpload(frontImage?.uri);
+            const backUploadPromise = safeUpload(backImage?.uri);
+            const ingredientsUploadPromise = safeUpload(ingredientsImage?.uri);
 
-            if (ingredientsImage?.uri) {
-                console.log('Uploading ingredients image...');
-                ingredientsUrl = await uploadImageToSupabase(ingredientsImage.uri);
-            }
-
+            // Queue up text extraction concurrently with the uploads
             const imagePath = Platform.OS === 'android'
                 ? ingredientsImage.uri
                 : ingredientsImage.uri.replace('file://', '');
 
-            const extractedText = await processImageWithTextRecognition(imagePath);
+            const textExtractionPromise = processImageWithTextRecognition(imagePath);
+
+            // Await all promises simultaneously
+            const [frontUrl, backUrl, ingredientsUrl, extractedText] = await Promise.all([
+                frontUploadPromise,
+                backUploadPromise,
+                ingredientsUploadPromise,
+                textExtractionPromise
+            ]);
 
             if (extractedText) {
+                // Compute SHA-256 hash using the extracted text
+                const ingredients_hash = CryptoJS.SHA256(extractedText).toString(CryptoJS.enc.Hex);
+
                 navigation.navigate('IngredientsResult', {
                     ingredients: extractedText,
+                    ingredients_hash,
                     imageUri: ingredientsImage.uri, // still pass local URI for preview
                     frontImage: frontUrl || undefined,
                     backImage: backUrl || undefined,
-                    ingredientsImage: ingredientsUrl,
+                    ingredientsImage: ingredientsUrl || undefined,
                 });
             } else {
                 Alert.alert('No Text Detected', 'Could not detect text in the ingredients image. Please try again with a clearer image.');

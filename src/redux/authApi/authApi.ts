@@ -1,6 +1,6 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { axiosBaseQuery } from "../services/baseQuery";
-import { LoginRequest, RegisterRequest, AuthResponse, HalalCheckRequest, HalalCheckResponse } from "../services/types";
+import { LoginRequest, RegisterRequest, AuthResponse } from "../services/types";
 import { API_ENDPOINTS, BASE_URL } from "../../utils/constant";
 
 export const authApi = createApi({
@@ -21,14 +21,7 @@ export const authApi = createApi({
                 data: userData,
             }),
         }),
-        halalCheck: builder.mutation<HalalCheckResponse, HalalCheckRequest>({
-            query: (halalCheckData) => ({
-                url: API_ENDPOINTS.HALAL_CHECK,
-                method: "POST",
-                data: halalCheckData,
-            }),
-        }),
     }),
 });
 
-export const { useLoginMutation, useHalalCheckMutation, useRegisterMutation } = authApi;
+export const { useLoginMutation, useRegisterMutation } = authApi;
