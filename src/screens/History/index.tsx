@@ -1,13 +1,13 @@
-import { StyleSheet, View, FlatList, TouchableOpacity, Image, Alert, RefreshControl } from 'react-native';
+import { StyleSheet, View, FlatList, TouchableOpacity, Image, Alert, RefreshControl, ActivityIndicator } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ScanHistoryItem } from '../../redux/slices/scanHistory/types';
-import { scanHistoryStorage } from '../../utils/scanHistoryStorage';
 import { SmallText } from '../../components/text';
 import Theme from '../../theme/theme';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { RootStackParamList } from '../../navigation/types/RootParamList';
+import { useGetHistoryQuery } from '../../redux/scanApi/scanApi';
 
 type HistoryNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -15,31 +15,38 @@ const History = () => {
     const navigation = useNavigation<HistoryNavigationProp>();
     const [scanHistory, setScanHistory] = useState<ScanHistoryItem[]>([]);
     const [refreshing, setRefreshing] = useState(false);
-    const [loading, setLoading] = useState(true);
 
-    // Load history when component mounts or comes into focus
-    const loadHistory = async () => {
-        try {
-            const history = await scanHistoryStorage.getHistory();
-            setScanHistory(history);
-        } catch (error) {
-            console.error('Failed to load history:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Load history on mount
-    useEffect(() => {
-        loadHistory();
-    }, []);
+    // API hook for history
+    const { data: apiHistory, isLoading: isApiLoading, error: apiError, refetch } = useGetHistoryQuery();
 
     // Reload history when screen comes into focus
     useFocusEffect(
         React.useCallback(() => {
-            loadHistory();
-        }, [])
+            refetch();
+        }, [refetch])
     );
+
+    // Update scanHistory when apiHistory changes
+    useEffect(() => {
+        if (apiHistory && Array.isArray(apiHistory)) {
+            // Map API data to ScanHistoryItem format
+            const mappedHistory: ScanHistoryItem[] = apiHistory.map((item: any) => ({
+                id: item.id.toString(),
+                ingredients: item.ingredient_text,
+                imageUri: item.front_image || item.ingredients_image || '',
+                frontImage: item.front_image,
+                backImage: item.back_image,
+                ingredientsImage: item.ingredients_image,
+                timestamp: new Date(item.saved_at).getTime(),
+                halalCheckResult: {
+                    overall_status: item.overall_status,
+                    reasoning: item.reasoning,
+                    ingredients_analysis: item.ingredients_analysis
+                }
+            }));
+            setScanHistory(mappedHistory);
+        }
+    }, [apiHistory]);
 
     // Helper function to get status color
     const getStatusColor = (status: string) => {
@@ -114,12 +121,8 @@ const History = () => {
                     text: 'Delete',
                     style: 'destructive',
                     onPress: async () => {
-                        try {
-                            const updatedHistory = await scanHistoryStorage.deleteScan(id);
-                            setScanHistory(updatedHistory);
-                        } catch (error) {
-                            Alert.alert('Error', 'Failed to delete scan from history');
-                        }
+                        // TODO: Implement API deletion
+                        console.log('Delete item:', id);
                     },
                 },
             ]
@@ -137,12 +140,8 @@ const History = () => {
                     text: 'Clear All',
                     style: 'destructive',
                     onPress: async () => {
-                        try {
-                            await scanHistoryStorage.clearHistory();
-                            setScanHistory([]);
-                        } catch (error) {
-                            Alert.alert('Error', 'Failed to clear history');
-                        }
+                        // TODO: Implement API clear all
+                        console.log('Clear all history');
                     },
                 },
             ]
@@ -152,7 +151,7 @@ const History = () => {
     // Handle refresh
     const onRefresh = async () => {
         setRefreshing(true);
-        await loadHistory();
+        await refetch();
         setRefreshing(false);
     };
 
@@ -160,7 +159,11 @@ const History = () => {
     const handleItemPress = (item: ScanHistoryItem) => {
         navigation.navigate('IngredientsResult', {
             ingredients: item.ingredients,
+            ingredients_hash: '', // Optional/Not provided by history API yet
             imageUri: item.imageUri || '',
+            frontImage: item.frontImage,
+            backImage: item.backImage,
+            ingredientsImage: item.ingredientsImage,
             halalCheckResult: item.halalCheckResult, // Pass pre-loaded result
         });
     };
@@ -168,9 +171,10 @@ const History = () => {
     // Render history item
     const renderHistoryItem = ({ item }: { item: ScanHistoryItem }) => {
         const status = item.halalCheckResult?.overall_status || 'unknown';
-        const ingredientsPreview = item.ingredients.length > 80
-            ? item.ingredients.substring(0, 80) + '...'
-            : item.ingredients;
+        const rawIngredients = item.ingredients || '';
+        const ingredientsPreview = rawIngredients.length > 80
+            ? rawIngredients.substring(0, 80) + '...'
+            : rawIngredients;
 
         return (
             <TouchableOpacity
@@ -181,9 +185,9 @@ const History = () => {
                 <View style={styles.cardContent}>
                     {/* Image or Icon */}
                     <View style={styles.imageContainer}>
-                        {item.imageUri ? (
+                        {item.frontImage ? (
                             <Image
-                                source={{ uri: item.imageUri }}
+                                source={{ uri: item.frontImage }}
                                 style={styles.thumbnail}
                                 resizeMode="cover"
                             />
@@ -304,21 +308,27 @@ const History = () => {
                         Scan History
                     </SmallText>
                 </View>
-                {scanHistory.length > 0 && (
+                {(scanHistory.length > 0 || isApiLoading) && (
                     <TouchableOpacity
                         style={styles.clearAllButton}
                         onPress={handleClearAll}
                         activeOpacity={0.7}
                     >
-                        <Icon name="trash" size={18} color={Theme.color.COLOR_RED} />
-                        <SmallText
-                            size={3}
-                            fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}
-                            color={Theme.color.COLOR_RED}
-                            textStyles={styles.clearAllText}
-                        >
-                            Clear All
-                        </SmallText>
+                        {isApiLoading ? (
+                            <ActivityIndicator size="small" color={Theme.color.COLOR_BLUE} />
+                        ) : (
+                            <>
+                                <Icon name="trash" size={18} color={Theme.color.COLOR_RED} />
+                                <SmallText
+                                    size={3}
+                                    fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}
+                                    color={Theme.color.COLOR_RED}
+                                    textStyles={styles.clearAllText}
+                                >
+                                    Clear All
+                                </SmallText>
+                            </>
+                        )}
                     </TouchableOpacity>
                 )}
             </View>

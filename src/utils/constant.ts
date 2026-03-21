@@ -18,4 +18,5 @@ export const API_ENDPOINTS = {
 
     // PRODUCTS: "/products",
     HALAL_CHECK: "api/check-halal",
+    HISTORY: "api/check-halal/history",
 };

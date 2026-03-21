@@ -14,7 +14,13 @@ export const scanApi = createApi({
                 data: halalCheckData,
             }),
         }),
+        getHistory: builder.query<any, void>({
+            query: () => ({
+                url: API_ENDPOINTS.HISTORY,
+                method: "GET",
+            }),
+        }),
     }),
 });
 
-export const { useHalalCheckMutation } = scanApi;
+export const { useHalalCheckMutation, useGetHistoryQuery } = scanApi;

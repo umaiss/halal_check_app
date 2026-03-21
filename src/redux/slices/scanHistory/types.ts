@@ -5,6 +5,9 @@ export interface ScanHistoryItem {
     timestamp: number;
     ingredients: string;
     imageUri?: string;
+    frontImage?: string;
+    backImage?: string;
+    ingredientsImage?: string;
     halalCheckResult: HalalCheckResponse | null;
 }
 

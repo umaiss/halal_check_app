@@ -157,22 +157,50 @@ function IngredientsResult() {
                 contentContainerStyle={styles.contentContainer}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Captured Image with Enhanced Design */}
-                {imageUri && (
-                    <View style={styles.imageContainer}>
-                        <Image
-                            source={{ uri: imageUri }}
-                            style={styles.capturedImage}
-                            resizeMode="cover"
-                        />
-                        <View style={styles.imageOverlay}>
-                            <Icon name="camera" size={20} color={Theme.color.COLOR_WHITE} />
-                            <SmallText textStyles={styles.imageLabel} size={2.5}>
-                                Scanned Image
-                            </SmallText>
+                {/* Product Images Section */}
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.imagesCarousel}
+                    contentContainerStyle={styles.imagesCarouselContent}
+                >
+                    {frontImage && (
+                        <View style={styles.imageCard}>
+                            <Image source={{ uri: frontImage }} style={styles.capturedImage} resizeMode="cover" />
+                            <View style={styles.imageOverlay}>
+                                <Icon name="camera" size={16} color={Theme.color.COLOR_WHITE} />
+                                <SmallText textStyles={styles.imageLabel} size={2.2}>Front View</SmallText>
+                            </View>
                         </View>
-                    </View>
-                )}
+                    )}
+                    {backImage && (
+                        <View style={styles.imageCard}>
+                            <Image source={{ uri: backImage }} style={styles.capturedImage} resizeMode="cover" />
+                            <View style={styles.imageOverlay}>
+                                <Icon name="camera" size={16} color={Theme.color.COLOR_WHITE} />
+                                <SmallText textStyles={styles.imageLabel} size={2.2}>Back View</SmallText>
+                            </View>
+                        </View>
+                    )}
+                    {ingredientsImage && (
+                        <View style={styles.imageCard}>
+                            <Image source={{ uri: ingredientsImage }} style={styles.capturedImage} resizeMode="cover" />
+                            <View style={styles.imageOverlay}>
+                                <Icon name="camera" size={16} color={Theme.color.COLOR_WHITE} />
+                                <SmallText textStyles={styles.imageLabel} size={2.2}>Ingredients</SmallText>
+                            </View>
+                        </View>
+                    )}
+                    {!frontImage && !backImage && !ingredientsImage && imageUri && (
+                        <View style={styles.imageContainer}>
+                            <Image source={{ uri: imageUri }} style={styles.capturedImage} resizeMode="cover" />
+                            <View style={styles.imageOverlay}>
+                                <Icon name="camera" size={20} color={Theme.color.COLOR_WHITE} />
+                                <SmallText textStyles={styles.imageLabel} size={2.5}>Scanned Image</SmallText>
+                            </View>
+                        </View>
+                    )}
+                </ScrollView>
 
                 {/* Halal Check Status Section */}
                 <View style={styles.halalCheckContainer}>
@@ -394,6 +422,25 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         overflow: 'hidden',
         marginBottom: 24,
+        backgroundColor: '#F5F5F5',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 5,
+    },
+    imagesCarousel: {
+        marginBottom: 24,
+    },
+    imagesCarouselContent: {
+        paddingRight: 20,
+    },
+    imageCard: {
+        width: 280,
+        height: 220,
+        borderRadius: 16,
+        overflow: 'hidden',
+        marginRight: 16,
         backgroundColor: '#F5F5F5',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
