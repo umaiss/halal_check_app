@@ -8,6 +8,7 @@ import Theme from '../../theme/theme';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { RootStackParamList } from '../../navigation/types/RootParamList';
 import { useGetHistoryQuery } from '../../redux/scanApi/scanApi';
+import { height, width } from '../../utils/dimensions';
 
 type HistoryNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -33,6 +34,7 @@ const History = () => {
             const mappedHistory: ScanHistoryItem[] = apiHistory.map((item: any) => ({
                 id: item.id.toString(),
                 ingredients: item.ingredient_text,
+                productName: item.product_name,
                 imageUri: item.front_image || item.ingredients_image || '',
                 frontImage: item.front_image,
                 backImage: item.back_image,
@@ -220,6 +222,19 @@ const History = () => {
                             </SmallText>
                         </View>
 
+                        {/* Product Name */}
+                        {item.productName ? (
+                            <SmallText
+                                size={4}
+                                fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}
+                                color={Theme.color.COLOR_TEXT}
+                                textStyles={styles.productNameText}
+                                numberOfLines={1}
+                            >
+                                {item.productName}
+                            </SmallText>
+                        ) : null}
+
                         {/* Ingredients Preview */}
                         <SmallText
                             size={3.2}
@@ -379,9 +394,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingTop: 60,
-        paddingHorizontal: 24,
-        paddingBottom: 16,
+        paddingTop: height(7.4),
+        paddingHorizontal: width(6.4),
+        paddingBottom: height(2),
         backgroundColor: Theme.color.COLOR_WHITE,
         borderBottomWidth: 1,
         borderBottomColor: '#F0F0F0',
@@ -398,8 +413,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        paddingVertical: 8,
-        paddingHorizontal: 12,
+        paddingVertical: height(1),
+        paddingHorizontal: width(3.2),
         borderRadius: 8,
         backgroundColor: '#FEE2E2',
     },
@@ -407,12 +422,12 @@ const styles = StyleSheet.create({
         marginLeft: 2,
     },
     countContainer: {
-        paddingHorizontal: 24,
-        paddingVertical: 12,
+        paddingHorizontal: width(10.6),
+        paddingVertical: height(1.5),
     },
     listContent: {
-        paddingHorizontal: 24,
-        paddingBottom: 24,
+        paddingHorizontal: width(6.4),
+        paddingBottom: height(3),
     },
     listContentEmpty: {
         flexGrow: 1,
@@ -420,7 +435,7 @@ const styles = StyleSheet.create({
     historyCard: {
         backgroundColor: Theme.color.COLOR_WHITE,
         borderRadius: 16,
-        marginBottom: 16,
+        marginBottom: height(2),
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.08,
@@ -431,21 +446,21 @@ const styles = StyleSheet.create({
     },
     cardContent: {
         flexDirection: 'row',
-        padding: 16,
+        padding: width(4.2),
         alignItems: 'flex-start',
     },
     imageContainer: {
-        marginRight: 12,
+        marginRight: width(3.2),
     },
     thumbnail: {
-        width: 70,
-        height: 70,
+        width: width(18.6),
+        height: width(18.6),
         borderRadius: 12,
         backgroundColor: '#F5F5F5',
     },
     placeholderIcon: {
-        width: 70,
-        height: 70,
+        width: width(18.6),
+        height: width(18.6),
         borderRadius: 12,
         backgroundColor: `${Theme.color.COLOR_BLUE}15`,
         justifyContent: 'center',
@@ -459,18 +474,18 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         alignSelf: 'flex-start',
-        paddingHorizontal: 10,
-        paddingVertical: 5,
+        paddingHorizontal: width(2.6),
+        paddingVertical: height(0.6),
         borderRadius: 8,
         gap: 4,
-        marginBottom: 8,
+        marginBottom: height(1),
     },
     statusText: {
         letterSpacing: 0.5,
     },
     ingredientsText: {
         lineHeight: 20,
-        marginBottom: 8,
+        marginBottom: height(1),
     },
     timestampContainer: {
         flexDirection: 'row',
@@ -481,39 +496,39 @@ const styles = StyleSheet.create({
         marginLeft: 2,
     },
     deleteButton: {
-        padding: 8,
-        marginLeft: 8,
+        padding: width(2.1),
+        marginLeft: width(2.1),
     },
     emptyContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: 40,
+        paddingHorizontal: width(10.6),
     },
     emptyIconContainer: {
-        width: 160,
-        height: 160,
-        borderRadius: 80,
+        width: width(42.6),
+        height: width(42.6),
+        borderRadius: width(21.3),
         backgroundColor: `${Theme.color.COLOT_SUBTEXT}10`,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 24,
+        marginBottom: height(3),
     },
     emptyTitle: {
         textAlign: 'center',
-        marginBottom: 8,
+        marginBottom: height(1),
     },
     emptySubtitle: {
         textAlign: 'center',
-        marginBottom: 32,
+        marginBottom: height(4),
         lineHeight: 22,
     },
     emptyButton: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: Theme.color.COLOR_BLUE,
-        paddingVertical: 14,
-        paddingHorizontal: 28,
+        paddingVertical: height(1.7),
+        paddingHorizontal: width(7.4),
         borderRadius: 12,
         gap: 8,
         shadowColor: Theme.color.COLOR_BLUE,

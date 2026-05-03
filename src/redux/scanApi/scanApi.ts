@@ -1,6 +1,6 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { axiosBaseQuery } from "../services/baseQuery";
-import { HalalCheckRequest, HalalCheckResponse } from "../services/types";
+import { HalalCheckRequest, HalalCheckResponse, ImproveCheckRequest } from "../services/types";
 import { API_ENDPOINTS } from "../../utils/constant";
 
 export const scanApi = createApi({
@@ -14,6 +14,13 @@ export const scanApi = createApi({
                 data: halalCheckData,
             }),
         }),
+        improveCheck: builder.mutation<any, { id: number; data: ImproveCheckRequest }>({
+            query: ({ id, data }) => ({
+                url: `${API_ENDPOINTS.HALAL_CHECK}/${id}/improve`,
+                method: "PATCH",
+                data,
+            }),
+        }),
         getHistory: builder.query<any, void>({
             query: () => ({
                 url: API_ENDPOINTS.HISTORY,
@@ -23,4 +30,4 @@ export const scanApi = createApi({
     }),
 });
 
-export const { useHalalCheckMutation, useGetHistoryQuery } = scanApi;
+export const { useHalalCheckMutation, useGetHistoryQuery, useImproveCheckMutation } = scanApi;

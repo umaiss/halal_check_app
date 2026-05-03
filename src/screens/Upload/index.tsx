@@ -19,6 +19,8 @@ import Theme from '../../theme/theme';
 import { styles } from './styles';
 import { uploadImageToSupabase } from '../../utils/imageUpload';
 import CryptoJS from 'crypto-js';
+import Input from '../../components/input';
+import { height } from '../../utils/dimensions';
 
 type UploadScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Upload'>;
 
@@ -29,6 +31,7 @@ const Upload = () => {
     const [frontImage, setFrontImage] = useState<Asset | null>(null);
     const [backImage, setBackImage] = useState<Asset | null>(null);
     const [ingredientsImage, setIngredientsImage] = useState<Asset | null>(null);
+    const [productName, setProductName] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
 
     const handleImageSelection = async (type: ImageType, source: 'camera' | 'gallery') => {
@@ -159,6 +162,7 @@ const Upload = () => {
                 navigation.navigate('IngredientsResult', {
                     ingredients: extractedText,
                     ingredients_hash,
+                    productName,
                     imageUri: ingredientsImage.uri, // still pass local URI for preview
                     frontImage: frontUrl || undefined,
                     backImage: backUrl || undefined,
@@ -230,6 +234,16 @@ const Upload = () => {
                 >
                     Please upload photos of the product. The ingredients photo is required for halal verification.
                 </SmallText>
+
+                <View style={{ marginBottom: height(2) }}>
+                    <Input
+                        label="Product Name"
+                        placeholder="Enter product name (e.g. Lay's Classic)"
+                        value={productName}
+                        onChangeText={setProductName}
+                        containerStyle={{ marginHorizontal: 0 }}
+                    />
+                </View>
 
                 <View style={styles.gridContainer}>
                     {renderImageButton('front', frontImage, 'Front Image')}

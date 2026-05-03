@@ -36,6 +36,13 @@ export interface HalalCheckRequest {
     front_image?: string;
     back_image?: string;
     ingredients_image?: string;
+    product_name?: string;
+}
+
+export interface ImproveCheckRequest {
+    barcode_image?: string;
+    manufacturer_image?: string;
+    additional_images?: string[];
 }
 
 export interface IngredientStatus {
@@ -46,6 +53,7 @@ export interface IngredientStatus {
 }
 
 export interface HalalCheckResponse {
+    id?: number;
     overall_status?: 'halal' | 'haram' | 'doubtful' | 'mushbooh';
     reasoning?: string;
     ingredients_analysis?: IngredientStatus[];

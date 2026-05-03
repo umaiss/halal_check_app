@@ -10,6 +10,7 @@ export type RootStackParamList = {
         frontImage?: string;
         backImage?: string;
         ingredientsImage?: string;
+        productName?: string;
         halalCheckResult?: any; // Pre-loaded result from history
         chatgpt_result?: any;   // Used when we load a cached record from DB
     };

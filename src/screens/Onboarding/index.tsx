@@ -17,9 +17,12 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ASYNC_KEYS from '../../utils/async-keys';
 
+import CryptoJS from 'crypto-js';
+import { height, width } from '../../utils/dimensions';
+
 type OnboardingNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Onboarding'>;
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const SCREEN_WIDTH = width(100);
 
 interface OnboardingSlide {
   id: number;
@@ -178,8 +181,8 @@ const styles = StyleSheet.create({
   },
   skipButton: {
     position: 'absolute',
-    top: 60,
-    right: 20,
+    top: height(7.4),
+    right: width(5.3),
     zIndex: 10,
     padding: 8,
   },
@@ -194,34 +197,34 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 40,
-    paddingTop: 100,
+    paddingHorizontal: width(10.6),
+    paddingTop: height(12),
   },
   iconContainer: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
+    width: width(42.6),
+    height: width(42.6),
+    borderRadius: width(21.3),
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 40,
+    marginBottom: height(5),
   },
   title: {
     color: Theme.color.COLOR_TEXT,
     textAlign: 'center',
-    marginBottom: 20,
-    paddingHorizontal: 20,
+    marginBottom: height(2.5),
+    paddingHorizontal: width(5.3),
   },
   description: {
     color: Theme.color.COLOT_SUBTEXT,
     textAlign: 'center',
     lineHeight: 24,
-    paddingHorizontal: 20,
+    paddingHorizontal: width(5.3),
   },
   paginationContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingVertical: height(2.5),
   },
   paginationDot: {
     width: 8,
@@ -235,14 +238,14 @@ const styles = StyleSheet.create({
     backgroundColor: Theme.color.COLOR_BLUE,
   },
   buttonContainer: {
-    paddingHorizontal: 40,
-    paddingBottom: 50,
+    paddingHorizontal: width(10.6),
+    paddingBottom: height(6),
   },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
+    paddingVertical: height(2),
     borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },

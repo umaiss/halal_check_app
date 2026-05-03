@@ -12,6 +12,7 @@ import { RootStackParamList, BottomTabParamList } from '../../navigation/types/R
 import Icon from 'react-native-vector-icons/Ionicons';
 import Theme from '../../theme/theme';
 import TextRecognition from '@react-native-ml-kit/text-recognition';
+import { height, width } from '../../utils/dimensions';
 
 type ScanNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Scan'>;
 
@@ -103,6 +104,7 @@ function Scan() {
             if (extractedText) {
                 navigation.navigate('IngredientsResult', {
                     ingredients: extractedText,
+                    ingredients_hash: '', // Add missing required field
                     imageUri: imageUri,
                 });
             } else {
@@ -221,33 +223,33 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     header: {
-        paddingTop: 20,
-        paddingHorizontal: 20,
+        paddingTop: height(2.5),
+        paddingHorizontal: width(5.3),
         alignItems: 'center',
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        paddingBottom: 20,
+        paddingBottom: height(2.5),
     },
     headerTitle: {
         color: 'white',
-        fontSize: 24,
+        fontSize: width(6.4),
         fontWeight: 'bold',
         marginBottom: 4,
     },
     headerSubtitle: {
         color: 'rgba(255, 255, 255, 0.8)',
-        fontSize: 14,
+        fontSize: width(3.7),
     },
     scanFrame: {
-        width: '85%',
+        width: width(85),
         aspectRatio: 1,
         alignSelf: 'center',
         position: 'relative',
-        marginVertical: 20,
+        marginVertical: height(2.5),
     },
     corner: {
         position: 'absolute',
-        width: 40,
-        height: 40,
+        width: width(10.6),
+        height: width(10.6),
         borderColor: Theme.color.COLOR_BLUE,
         borderWidth: 4,
     },
@@ -290,12 +292,12 @@ const styles = StyleSheet.create({
     },
     captureButtonContainer: {
         alignItems: 'center',
-        paddingBottom: 40,
+        paddingBottom: height(5),
     },
     captureButton: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
+        width: width(21.3),
+        height: width(21.3),
+        borderRadius: width(10.65),
         backgroundColor: 'rgba(255, 255, 255, 0.9)',
         justifyContent: 'center',
         alignItems: 'center',
@@ -311,51 +313,51 @@ const styles = StyleSheet.create({
         opacity: 0.6,
     },
     captureButtonInner: {
-        width: 64,
-        height: 64,
-        borderRadius: 32,
+        width: width(17),
+        height: width(17),
+        borderRadius: width(8.5),
         backgroundColor: Theme.color.COLOR_BLUE,
         justifyContent: 'center',
         alignItems: 'center',
     },
     captureIcon: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
+        width: width(13.3),
+        height: width(13.3),
+        borderRadius: width(6.65),
         backgroundColor: 'white',
     },
     captureHint: {
         color: 'white',
-        fontSize: 14,
-        marginTop: 12,
+        fontSize: width(3.7),
+        marginTop: height(1.5),
         fontWeight: '500',
     },
     errorContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: 40,
+        paddingHorizontal: width(10.6),
         backgroundColor: Theme.color.COLOR_WHITE,
     },
     errorTitle: {
-        fontSize: 22,
+        fontSize: width(5.8),
         fontWeight: 'bold',
         color: Theme.color.COLOR_TEXT,
-        marginTop: 20,
-        marginBottom: 10,
+        marginTop: height(2.5),
+        marginBottom: height(1.2),
         textAlign: 'center',
     },
     errorText: {
-        fontSize: 16,
+        fontSize: width(4.2),
         color: Theme.color.COLOT_SUBTEXT,
         textAlign: 'center',
-        marginBottom: 30,
+        marginBottom: height(3.7),
         lineHeight: 24,
     },
     permissionButton: {
         backgroundColor: Theme.color.COLOR_BLUE,
-        paddingVertical: 14,
-        paddingHorizontal: 32,
+        paddingVertical: height(1.7),
+        paddingHorizontal: width(8.5),
         borderRadius: 12,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
@@ -365,7 +367,7 @@ const styles = StyleSheet.create({
     },
     permissionButtonText: {
         color: Theme.color.COLOR_WHITE,
-        fontSize: 16,
+        fontSize: width(4.2),
         fontWeight: 'bold',
     },
 });

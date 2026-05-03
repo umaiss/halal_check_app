@@ -1,8 +1,8 @@
-import { StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet } from 'react-native';
 import Theme from '../../theme/theme';
+import { height, width } from '../../utils/dimensions';
 
-const { width } = Dimensions.get('window');
-const GRID_ITEM_WIDTH = (width - 48 - 16) / 2; // (Screen width - padding - gap) / 2
+const GRID_ITEM_WIDTH = (width(100) - width(12.8) - width(4.2)) / 2; // (Screen width - padding - gap) / 2
 
 export const styles = StyleSheet.create({
     container: {
@@ -12,30 +12,30 @@ export const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 24,
-        paddingTop: 60,
-        paddingBottom: 20,
+        paddingHorizontal: width(6.4),
+        paddingTop: height(7.4),
+        paddingBottom: height(2.5),
         backgroundColor: Theme.color.COLOR_WHITE,
     },
     backButton: {
-        marginRight: 16,
+        marginRight: width(4.2),
         padding: 4,
     },
     content: {
-        paddingHorizontal: 24,
-        paddingBottom: 100,
+        paddingHorizontal: width(6.4),
+        paddingBottom: height(12),
     },
     description: {
-        marginBottom: 24,
+        marginBottom: height(3),
         lineHeight: 20,
     },
     gridContainer: {
         flexDirection: 'row',
-        gap: 16,
-        marginBottom: 16,
+        gap: width(4.2),
+        marginBottom: height(2),
     },
     fullWidthContainer: {
-        marginBottom: 16,
+        marginBottom: height(2),
     },
     imageButton: {
         backgroundColor: Theme.color.COLOR_WHITE,
@@ -44,7 +44,7 @@ export const styles = StyleSheet.create({
         borderColor: Theme.color.COLOR_STROKE,
         borderStyle: 'dashed',
         overflow: 'hidden',
-        height: 160,
+        height: height(20),
         width: '100%',
         flex: 1,
     },
@@ -57,11 +57,11 @@ export const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 16,
+        padding: width(4.2),
     },
     placeholderText: {
         textAlign: 'center',
-        marginTop: 8,
+        marginTop: height(1),
     },
     editIconContainer: {
         position: 'absolute',
@@ -76,8 +76,8 @@ export const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
-        padding: 24,
-        paddingBottom: 40,
+        padding: width(6.4),
+        paddingBottom: height(5),
         backgroundColor: Theme.color.COLOR_WHITE,
         borderTopWidth: 1,
         borderTopColor: Theme.color.COLOR_STROKE,
@@ -87,7 +87,7 @@ export const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: Theme.color.COLOR_BLUE,
-        paddingVertical: 16,
+        paddingVertical: height(2),
         borderRadius: 16,
         gap: 8,
     },

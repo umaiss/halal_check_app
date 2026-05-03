@@ -20,6 +20,7 @@ import Theme from '../../theme/theme';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { RootStackParamList, BottomTabParamList } from '../../navigation/types/RootParamList';
 import TextRecognition from '@react-native-ml-kit/text-recognition';
+import { height, width } from '../../utils/dimensions';
 
 type HomeNavigationProp = CompositeNavigationProp<
     BottomTabNavigationProp<BottomTabParamList, 'Home'>,
@@ -76,7 +77,7 @@ function Home() {
 
     const handleOpenCamera = async () => {
         try {
-            navigation.navigate('Upload');
+            navigation.navigate('Upload' as never);
         } catch (error) {
             console.error('Error opening camera:', error);
             Alert.alert('Error', 'Failed to process image. Please try again.');
@@ -113,8 +114,9 @@ function Home() {
                     const extractedText = await processImageWithTextRecognition(imagePath);
 
                     if (extractedText) {
-                        navigation.navigate('IngredientsResult', {
+                        (navigation as any).navigate('IngredientsResult', {
                             ingredients: extractedText,
+                            ingredients_hash: '', // Add missing required field
                             imageUri: asset.uri,
                         });
                     } else {
@@ -136,8 +138,9 @@ function Home() {
             return;
         }
 
-        navigation.navigate('IngredientsResult', {
+        (navigation as any).navigate('IngredientsResult', {
             ingredients: ingredientText.trim(),
+            ingredients_hash: '', // Add missing required field
             imageUri: undefined,
         });
     };
@@ -358,9 +361,9 @@ const styles = StyleSheet.create({
         backgroundColor: Theme.color.COLOR_WHITE,
     },
     header: {
-        paddingTop: 60,
-        paddingHorizontal: 24,
-        paddingBottom: 20,
+        paddingTop: height(7.4),
+        paddingHorizontal: width(6.4),
+        paddingBottom: height(2.5),
         backgroundColor: Theme.color.COLOR_WHITE,
     },
     subtitle: {
@@ -368,8 +371,8 @@ const styles = StyleSheet.create({
     },
     tabBar: {
         backgroundColor: `${Theme.color.COLOR_STROKE}80`,
-        marginHorizontal: 24,
-        marginBottom: 20,
+        marginHorizontal: width(6.4),
+        marginBottom: height(2.5),
         borderRadius: 16,
         elevation: 0,
         shadowOpacity: 0,
@@ -390,43 +393,43 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
-        paddingVertical: 12,
+        paddingVertical: height(1.5),
     },
     tabText: {
         marginLeft: 4,
     },
     scrollContent: {
         flexGrow: 1,
-        paddingHorizontal: 24,
+        paddingHorizontal: width(6.4),
     },
     cameraTab: {
         flex: 1,
         alignItems: 'center',
-        paddingTop: 20,
-        paddingHorizontal: 24,
+        paddingTop: height(2.5),
+        paddingHorizontal: width(6.4),
     },
     typeTab: {
         flex: 1,
         alignItems: 'center',
-        paddingTop: 20,
+        paddingTop: height(2.5),
     },
     iconPreview: {
-        width: 160,
-        height: 160,
-        borderRadius: 80,
+        width: width(42.6),
+        height: width(42.6),
+        borderRadius: width(21.3),
         backgroundColor: `${Theme.color.COLOR_BLUE}10`,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 24,
+        marginBottom: height(3),
     },
     tabTitle: {
         textAlign: 'center',
-        marginBottom: 8,
+        marginBottom: height(1),
     },
     tabDescription: {
         textAlign: 'center',
-        marginBottom: 32,
-        paddingHorizontal: 20,
+        marginBottom: height(4),
+        paddingHorizontal: width(5.3),
         lineHeight: 22,
     },
     buttonContainer: {
@@ -436,7 +439,7 @@ const styles = StyleSheet.create({
     actionButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 20,
+        padding: width(5.3),
         borderRadius: 16,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
@@ -453,13 +456,13 @@ const styles = StyleSheet.create({
         borderColor: Theme.color.COLOR_STROKE,
     },
     buttonIconContainer: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
+        width: width(15),
+        height: width(15),
+        borderRadius: width(7.5),
         backgroundColor: 'rgba(255, 255, 255, 0.2)',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 16,
+        marginRight: width(4.2),
     },
     buttonTextContainer: {
         flex: 1,
@@ -474,7 +477,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         borderWidth: 2,
         borderColor: Theme.color.COLOR_STROKE,
-        marginBottom: 20,
+        marginBottom: height(2.5),
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
@@ -482,16 +485,16 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     textInput: {
-        padding: 16,
-        fontSize: 16,
+        padding: width(4.2),
+        fontSize: width(4.2),
         fontFamily: Theme.fonts.FONT_NUNITO_REGULAR,
         color: Theme.color.COLOR_TEXT,
-        minHeight: 160,
-        maxHeight: 240,
+        minHeight: height(20),
+        maxHeight: height(30),
     },
     characterCounter: {
-        paddingHorizontal: 16,
-        paddingBottom: 12,
+        paddingHorizontal: width(4.2),
+        paddingBottom: height(1.5),
         alignItems: 'flex-end',
     },
     submitButton: {
@@ -499,8 +502,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: Theme.color.COLOR_BLUE,
-        paddingVertical: 16,
-        paddingHorizontal: 32,
+        paddingVertical: height(2),
+        paddingHorizontal: width(8.5),
         borderRadius: 16,
         gap: 8,
         width: '100%',
