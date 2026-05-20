@@ -4,6 +4,7 @@ export interface ScanHistoryItem {
     id: string;
     timestamp: number;
     ingredients: string;
+    productName?: string;
     imageUri?: string;
     frontImage?: string;
     backImage?: string;

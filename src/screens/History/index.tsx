@@ -229,7 +229,7 @@ const History = () => {
                                 fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}
                                 color={Theme.color.COLOR_TEXT}
                                 textStyles={styles.productNameText}
-                                numberOfLines={1}
+                                textProps={{ numberOfLines: 1 }}
                             >
                                 {item.productName}
                             </SmallText>
@@ -482,6 +482,9 @@ const styles = StyleSheet.create({
     },
     statusText: {
         letterSpacing: 0.5,
+    },
+    productNameText: {
+        marginBottom: height(0.5),
     },
     ingredientsText: {
         lineHeight: 20,

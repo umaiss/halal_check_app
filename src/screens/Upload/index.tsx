@@ -128,7 +128,7 @@ const Upload = () => {
             const safeUpload = async (uri: string | undefined): Promise<string> => {
                 if (!uri) return '';
                 try {
-                    return await uploadImageToSupabase(uri);
+                    return await uploadImageToSupabase(uri, 'halal-images', productName);
                 } catch (e) {
                     console.error('Failed to upload image:', e);
                     return ''; // Default to empty string on failure instead of crashing the whole flow

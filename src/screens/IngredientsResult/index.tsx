@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity, Image, ActivityIndicator, SafeAreaView, Modal, TextInput, Alert } from 'react-native';
+import { StyleSheet, View, ScrollView, TouchableOpacity, Image, ActivityIndicator, SafeAreaView, Modal, TextInput, Alert, Platform } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types/RootParamList';
@@ -192,20 +192,20 @@ function IngredientsResult() {
 
             // 1. Upload barcode image if exists
             if (barcodeImage) {
-                const url = await uploadImageToSupabase(barcodeImage, 'improvement-images');
+                const url = await uploadImageToSupabase(barcodeImage, 'improvement-images', productName);
                 if (url) improvementData.barcode_image = url;
             }
 
             // 2. Upload manufacturer image if exists
             if (manufacturerImage) {
-                const url = await uploadImageToSupabase(manufacturerImage, 'improvement-images');
+                const url = await uploadImageToSupabase(manufacturerImage, 'improvement-images', productName);
                 if (url) improvementData.manufacturer_image = url;
             }
 
             // 3. Upload additional images if exist
             if (additionalImages.length > 0) {
                 const uploadPromises = additionalImages.map((uri) => 
-                    uploadImageToSupabase(uri, 'improvement-images')
+                    uploadImageToSupabase(uri, 'improvement-images', productName)
                 );
                 const urls = await Promise.all(uploadPromises);
                 improvementData.additional_images = urls.filter((url): url is string => !!url);
@@ -503,7 +503,7 @@ function IngredientsResult() {
                                     activeOpacity={0.7}
                                 >
                                     <View style={{ flex: 1 }}>
-                                        <SmallText textStyles={styles.fieldLabel} size={3.5} fontFamily={Theme.fonts.FONT_NUNITO_BOLD}>
+                                        <SmallText textStyles={styles.fieldLabel} size={3.5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
                                             Barcode Image
                                         </SmallText>
                                         <SmallText textStyles={styles.fieldSubLabel} size={2.5}>
@@ -525,7 +525,7 @@ function IngredientsResult() {
                                     activeOpacity={0.7}
                                 >
                                     <View style={{ flex: 1 }}>
-                                        <SmallText textStyles={styles.fieldLabel} size={3.5} fontFamily={Theme.fonts.FONT_NUNITO_BOLD}>
+                                        <SmallText textStyles={styles.fieldLabel} size={3.5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
                                             Manufacturer Info
                                         </SmallText>
                                         <SmallText textStyles={styles.fieldSubLabel} size={2.5}>
@@ -543,7 +543,7 @@ function IngredientsResult() {
                             </View>
 
                             <View style={styles.additionalImagesSection}>
-                                <SmallText textStyles={styles.fieldLabel} size={3.5} fontFamily={Theme.fonts.FONT_NUNITO_BOLD}>
+                                <SmallText textStyles={styles.fieldLabel} size={3.5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
                                     Other Product Images
                                 </SmallText>
                                 <View style={styles.additionalImagesGrid}>
@@ -933,7 +933,7 @@ const styles = StyleSheet.create({
     },
     modalSubTitle: {
         color: Theme.color.COLOR_BLUE,
-        fontFamily: Theme.fonts.FONT_NUNITO_BOLD,
+        fontFamily: Theme.fonts.FONT_NUNITO_EXTRABOLD,
     },
     modalDescription: {
         color: Theme.color.COLOT_SUBTEXT,

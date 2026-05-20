@@ -3,10 +3,24 @@ import { decode } from 'base64-arraybuffer';
 import * as RNFS from 'react-native-fs';
 import { Platform } from 'react-native';
 
-export const uploadImageToSupabase = async (uri: string, folder: string = 'halal-images') => {
+export const uploadImageToSupabase = async (uri: string, folder: string = 'halal-images', productName?: string) => {
     try {
         const fileName = `${Date.now()}-${uri.split('/').pop()}`;
-        const filePath = `${folder}/${fileName}`;
+        
+        let pathFolder = folder;
+        const cleanProductName = productName
+            ? productName.toLowerCase().trim().replace(/[^a-z0-9-_]/g, '_').replace(/_+/g, '_')
+            : 'unnamed_product';
+
+        if (folder === 'halal-images') {
+            // Replace generic 'halal-images' folder with product name
+            pathFolder = cleanProductName;
+        } else {
+            // For other folders (like 'improvement-images'), nest under it
+            pathFolder = `${folder}/${cleanProductName}`;
+        }
+
+        const filePath = `${pathFolder}/${fileName}`;
 
         // Read file as base64
         const base64 = await RNFS.readFile(uri, 'base64');
