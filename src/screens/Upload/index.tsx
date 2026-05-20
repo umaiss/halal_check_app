@@ -37,7 +37,9 @@ const Upload = () => {
     const handleImageSelection = async (type: ImageType, source: 'camera' | 'gallery') => {
         const options: any = {
             mediaType: 'photo',
-            quality: 0.8,
+            quality: 0.6,
+            maxWidth: 1200,
+            maxHeight: 1200,
             selectionLimit: 1,
         };
 

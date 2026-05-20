@@ -164,7 +164,9 @@ function IngredientsResult() {
         try {
             const result = await launchImageLibrary({
                 mediaType: 'photo',
-                quality: 0.8,
+                quality: 0.6,
+                maxWidth: 1080,
+                maxHeight: 1080,
                 selectionLimit: type === 'additional' ? 3 - additionalImages.length : 1,
             });
 
@@ -190,26 +192,36 @@ function IngredientsResult() {
         try {
             const improvementData: any = {};
 
-            // 1. Upload barcode image if exists
+            // Upload all images in parallel
+            const uploadPromises: Promise<void>[] = [];
+
             if (barcodeImage) {
-                const url = await uploadImageToSupabase(barcodeImage, 'improvement-images', productName);
-                if (url) improvementData.barcode_image = url;
+                uploadPromises.push(
+                    uploadImageToSupabase(barcodeImage, 'improvement-images', productName)
+                        .then(url => { if (url) improvementData.barcode_image = url; })
+                );
             }
 
-            // 2. Upload manufacturer image if exists
             if (manufacturerImage) {
-                const url = await uploadImageToSupabase(manufacturerImage, 'improvement-images', productName);
-                if (url) improvementData.manufacturer_image = url;
+                uploadPromises.push(
+                    uploadImageToSupabase(manufacturerImage, 'improvement-images', productName)
+                        .then(url => { if (url) improvementData.manufacturer_image = url; })
+                );
             }
 
-            // 3. Upload additional images if exist
             if (additionalImages.length > 0) {
-                const uploadPromises = additionalImages.map((uri) => 
+                const additionalPromises = additionalImages.map((uri) => 
                     uploadImageToSupabase(uri, 'improvement-images', productName)
                 );
-                const urls = await Promise.all(uploadPromises);
-                improvementData.additional_images = urls.filter((url): url is string => !!url);
+                uploadPromises.push(
+                    Promise.all(additionalPromises)
+                        .then(urls => {
+                            improvementData.additional_images = urls.filter((url): url is string => !!url);
+                        })
+                );
             }
+
+            await Promise.all(uploadPromises);
 
             // 4. Send to backend
             await improveCheck({
