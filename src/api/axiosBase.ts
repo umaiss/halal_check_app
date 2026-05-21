@@ -1,6 +1,9 @@
 import axios, { AxiosInstance } from "axios";
 import { BASE_URL } from "../utils/constant";
 import { store } from "../redux/store";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import ASYNC_KEYS from "../utils/async-keys";
+import { logout, setCredentials } from "../redux/slices/auth/authSlice";
 
 const axiosInstance: AxiosInstance = axios.create({
     baseURL: BASE_URL,
@@ -36,6 +39,20 @@ axiosInstance.interceptors.request.use(
     }
 );
 
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+    failedQueue.forEach((prom) => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token);
+        }
+    });
+    failedQueue = [];
+};
+
 axiosInstance.interceptors.response.use(
     (response) => {
         console.log('✅ Axios Response:', {
@@ -45,7 +62,9 @@ axiosInstance.interceptors.response.use(
         });
         return response;
     },
-    (error) => {
+    async (error) => {
+        const originalRequest = error.config;
+
         // Enhanced error logging
         console.error('❌ Axios Response Error:', {
             message: error.message,
@@ -55,10 +74,95 @@ axiosInstance.interceptors.response.use(
             status: error.response?.status,
             statusText: error.response?.statusText,
             data: error.response?.data,
-            headers: error.response?.headers,
         });
 
-        // Here you can refresh token if needed
+        // Check if error is 401 and we haven't retried this request yet
+        if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+            
+            // If the 401 happened on the refresh endpoint itself, do not retry
+            if (originalRequest.url?.includes('auth/refresh')) {
+                store.dispatch(logout());
+                await AsyncStorage.removeItem(ASYNC_KEYS.USER_TOKEN);
+                await AsyncStorage.removeItem(ASYNC_KEYS.USER_REFRESH_TOKEN);
+                await AsyncStorage.removeItem("UserInfo");
+                return Promise.reject(error);
+            }
+
+            if (isRefreshing) {
+                return new Promise((resolve, reject) => {
+                    failedQueue.push({ resolve, reject });
+                })
+                    .then((token) => {
+                        if (originalRequest.headers) {
+                            originalRequest.headers.Authorization = `Bearer ${token}`;
+                        }
+                        return axiosInstance(originalRequest);
+                    })
+                    .catch((err) => {
+                        return Promise.reject(err);
+                    });
+            }
+
+            originalRequest._retry = true;
+            isRefreshing = true;
+
+            try {
+                const state = store.getState();
+                const refreshToken = state.auth?.refreshToken || await AsyncStorage.getItem(ASYNC_KEYS.USER_REFRESH_TOKEN);
+
+                if (!refreshToken) {
+                    throw new Error('No refresh token available');
+                }
+
+                // Call refresh endpoint directly using raw axios (to avoid this interceptor trigger)
+                const refreshResponse = await axios.post(`${BASE_URL}api/auth/refresh`, {
+                    refresh_token: refreshToken
+                }, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const { access_token, refresh_token, user } = refreshResponse.data;
+
+                // Store new credentials
+                await AsyncStorage.setItem(ASYNC_KEYS.USER_TOKEN, access_token);
+                if (refresh_token) {
+                    await AsyncStorage.setItem(ASYNC_KEYS.USER_REFRESH_TOKEN, refresh_token);
+                }
+                if (user) {
+                    await AsyncStorage.setItem("UserInfo", JSON.stringify(user));
+                }
+
+                store.dispatch(setCredentials({
+                    token: access_token,
+                    refreshToken: refresh_token || refreshToken,
+                    user: user || state.auth?.user
+                }));
+
+                // Process queued requests
+                processQueue(null, access_token);
+
+                // Retry original request
+                if (originalRequest.headers) {
+                    originalRequest.headers.Authorization = `Bearer ${access_token}`;
+                }
+                return axiosInstance(originalRequest);
+            } catch (refreshError) {
+                processQueue(refreshError, null);
+
+                // Clear credentials and logout
+                store.dispatch(logout());
+                await AsyncStorage.removeItem(ASYNC_KEYS.USER_TOKEN);
+                await AsyncStorage.removeItem(ASYNC_KEYS.USER_REFRESH_TOKEN);
+                await AsyncStorage.removeItem("UserInfo");
+
+                return Promise.reject(refreshError);
+            } finally {
+                isRefreshing = false;
+            }
+        }
+
         return Promise.reject(error);
     }
 );

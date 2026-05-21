@@ -87,8 +87,17 @@ const Signup = () => {
                 console.log('Signup Success:', response);
 
                 if (response?.access_token && response?.user) {
-                    await AsyncStorage.setItem(ASYNC_KEYS.USER_TOKEN, response?.access_token);
-                    dispatch(setCredentials({ token: response?.access_token, user: response?.user }));
+                    await AsyncStorage.setItem(ASYNC_KEYS.USER_TOKEN, response.access_token);
+                    if (response.refresh_token) {
+                        await AsyncStorage.setItem(ASYNC_KEYS.USER_REFRESH_TOKEN, response.refresh_token);
+                    }
+                    await AsyncStorage.setItem("UserInfo", JSON.stringify(response.user));
+
+                    dispatch(setCredentials({
+                        token: response.access_token,
+                        refreshToken: response.refresh_token || null,
+                        user: response.user
+                    }));
                 } else {
                     Alert.alert('Signup Failed', 'Invalid response from server');
                 }

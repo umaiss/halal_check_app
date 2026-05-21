@@ -24,14 +24,18 @@ function App() {
       console.log('Onboarding Status:', onboardingStatus);
       setIsOnboardingCompleted(onboardingStatus === 'true');
 
-      // 2. Check Token
+      // 2. Check Tokens & User Info
       const token = await AsyncStorage.getItem(ASYNC_KEYS.USER_TOKEN);
-      console.log('Token:', token);
-      if (token) {
+      const refreshToken = await AsyncStorage.getItem(ASYNC_KEYS.USER_REFRESH_TOKEN);
+      const userInfoStr = await AsyncStorage.getItem("UserInfo");
+      const user = userInfoStr ? JSON.parse(userInfoStr) : { id: '1', name: 'User', email: 'user@example.com' };
 
+      console.log('Bootstrap Token loaded:', token);
+      console.log('Bootstrap Refresh Token loaded:', refreshToken);
+
+      if (token) {
         // Dispatch to Redux
-        // Note: In a real app, you might validate the token with an API call here
-        store.dispatch(setCredentials({ token, user: { id: '1', name: 'User', email: 'user@example.com' } }));
+        store.dispatch(setCredentials({ token, refreshToken, user }));
       }
     } catch (error) {
 

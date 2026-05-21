@@ -28,6 +28,8 @@ const Profile = () => {
                     onPress: async () => {
                         try {
                             await AsyncStorage.removeItem(ASYNC_KEYS.USER_TOKEN);
+                            await AsyncStorage.removeItem(ASYNC_KEYS.USER_REFRESH_TOKEN);
+                            await AsyncStorage.removeItem("UserInfo");
                             dispatch(logout());
                         } catch (e) {
                             console.error("Logout Error", e);
