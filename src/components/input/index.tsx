@@ -1,7 +1,6 @@
 import React, {
     forwardRef,
     useState,
-    Ref,
     ForwardedRef,
 } from 'react';
 import {
@@ -27,24 +26,26 @@ interface InputProps {
     onSubmitEditing?: TextInputProps['onSubmitEditing'];
     returnKeyType?: TextInputProps['returnKeyType'];
     secureTextEntry?: boolean;
-    control?: any; // for react-hook-form, can be typed more strictly if used
+    control?: any; // for react-hook-form
     name?: string;
     label?: string;
     inputContainer?: ViewStyle;
     renderRightIcon?: React.ReactNode;
     mandatory?: boolean;
     onFocus?: () => void;
+    onBlur?: () => void;
     onChangeText?: (text: string) => void;
     value?: string;
     error?: string;
-    icon?: React.ReactNode
+    icon?: React.ReactNode;
+    variant?: 'light' | 'glass';
 }
 
 function Input({
         inputStyle = {},
         containerStyle = {},
         placeholder,
-        placeholderColor = Theme.color.COLOT_SUBTEXT,
+        placeholderColor,
         inputProps,
         keyboardType = 'default',
         onSubmitEditing,
@@ -57,25 +58,68 @@ function Input({
         renderRightIcon,
         mandatory = false,
         onFocus,
+        onBlur,
         onChangeText,
         value,
         error,
-        icon
+        icon,
+        variant = 'light'
     }: InputProps,
     ref: ForwardedRef<TextInput>) {
+
+    const [isFocused, setIsFocused] = useState(false);
+
+    const handleFocus = () => {
+        setIsFocused(true);
+        if (onFocus) onFocus();
+    };
+
+    const handleBlur = () => {
+        setIsFocused(false);
+        if (onBlur) onBlur();
+    };
+
+    const containerVariantStyle = {
+        light: {
+            backgroundColor: '#FFFFFF',
+            borderColor: isFocused ? Theme.color.COLOR_PRIMARY_GREEN : '#ECEFF1',
+        },
+        glass: {
+            backgroundColor: 'rgba(255, 255, 255, 0.08)',
+            borderColor: isFocused ? '#FFFFFF' : 'rgba(255, 255, 255, 0.15)',
+        }
+    }[variant];
+
+    const inputVariantStyle = {
+        light: {
+            color: Theme.color.COLOR_INK,
+        },
+        glass: {
+            color: '#FFFFFF',
+        }
+    }[variant];
+
+    const finalPlaceholderColor = placeholderColor || (variant === 'glass' ? 'rgba(255, 255, 255, 0.5)' : Theme.color.COLOR_MUTED);
+    const labelColor = variant === 'glass' ? 'rgba(255, 255, 255, 0.9)' : Theme.color.COLOR_INK;
 
     return (
         <View style={[styles.container, containerStyle]}>
             {label ? (
-                <SmallText size={3.5} color={Theme.color.COLOR_TEXT} textStyles={CommonStyles.marginLeft_5}>
+                <SmallText 
+                    size={3.5} 
+                    color={labelColor} 
+                    textStyles={CommonStyles.marginLeft_2}
+                    fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM}
+                >
                     {label}
-                    {mandatory && <Text style={{ color: Theme.color.COLOR_RED }}>*</Text>}
+                    {mandatory && <Text style={{ color: Theme.color.COLOR_RED }}> *</Text>}
                 </SmallText>
             ) : null}
 
             <View
                 style={[
                     styles.inputContainer,
+                    containerVariantStyle,
                     inputContainer,
                 ]}
             >
@@ -83,8 +127,8 @@ function Input({
                 <TextInput
                     ref={ref}
                     placeholder={placeholder}
-                    placeholderTextColor={placeholderColor}
-                    style={[styles.input, inputStyle]}
+                    placeholderTextColor={finalPlaceholderColor}
+                    style={[styles.input, inputVariantStyle, inputStyle]}
                     onChangeText={onChangeText}
                     value={value}
                     blurOnSubmit={false}
@@ -92,6 +136,8 @@ function Input({
                     onSubmitEditing={onSubmitEditing}
                     returnKeyType={returnKeyType}
                     secureTextEntry={secureTextEntry}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
                     {...inputProps}
                 />
                 {renderRightIcon}
@@ -101,9 +147,7 @@ function Input({
                 <SmallText textStyles={CommonStyles.marginLeft_2} color={Theme.color.COLOR_RED} size={2.9}>
                     *{error}
                 </SmallText>
-            ) : (
-                <View />
-            )}
+            ) : null}
         </View>
     );
 }

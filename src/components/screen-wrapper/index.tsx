@@ -37,6 +37,7 @@ interface ScreenWrapperProps {
   barStyle?: StatusBarProps['barStyle'];
   imageStyle?: ImageStyle;
   containerStyle?: ViewStyle;
+  contentContainerStyle?: ViewStyle;
   loading?: boolean;
   error?: string | null;
   onRetry?: () => void;
@@ -62,6 +63,7 @@ const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
   barStyle = 'dark-content',
   imageStyle = {},
   containerStyle = {},
+  contentContainerStyle = {},
   loading = false,
   error = null,
   onRetry,
@@ -89,7 +91,7 @@ const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
       duration: 250,
       useNativeDriver: false,
     }).start();
-  }, [isConnected]);
+  }, [isConnected, bannerAnim]);
 
   const FocusAwareStatusBar: React.FC<StatusBarProps> = props =>
     isFocused ? <StatusBar {...props} /> : null;
@@ -169,7 +171,7 @@ const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
         {scrollEnabled ? (
           <KeyboardAwareScrollView
             style={[styles.container, { backgroundColor }]}
-            contentContainerStyle={styles.contentContainer}
+            contentContainerStyle={[styles.contentContainer, contentContainerStyle]}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >

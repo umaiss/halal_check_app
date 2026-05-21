@@ -5,7 +5,7 @@ export const EmailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 export const NameRegex = /^[A-Za-z]+(?: [A-Za-z]+)*$/
 
 // export const BASE_URL = 'https://halal-check-backend-production.up.railway.app';
-export const BASE_URL = 'http://localhost:3000/';
+export const BASE_URL = 'http://192.168.4.18:3000/';
 // export const BASE_URL = 'http://192.168.4.50:3000';
 
 

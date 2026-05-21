@@ -1,17 +1,28 @@
-import React from 'react';
-import { View, SafeAreaView, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, SafeAreaView, ScrollView, TouchableOpacity, Switch, Platform, Alert, StyleSheet } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { logout } from '../../redux/slices/auth/authSlice';
 import ASYNC_KEYS from '../../utils/async-keys';
 import { RootState } from '../../redux/store';
-import { LargeText, MediumText, Button } from '../../components';
+import { SmallText } from '../../components/text';
 import Theme from '../../theme/theme';
+import { useGetHistoryQuery } from '../../redux/scanApi/scanApi';
 import { styles } from './styles';
 
-const Profile = () => {
+function Profile() {
     const dispatch = useDispatch();
     const { user } = useSelector((state: RootState) => state.auth);
+    
+    // Fetch live scan count from API
+    const { data: apiHistory } = useGetHistoryQuery();
+    const scanCount = apiHistory && Array.isArray(apiHistory) ? apiHistory.length : 0;
+
+    // Settings Toggle States
+    const [pushNotifications, setPushNotifications] = useState(true);
+    const [darkMode, setDarkMode] = useState(false);
+    const [historySync, setHistorySync] = useState(true);
 
     const handleLogout = () => {
         Alert.alert(
@@ -42,34 +53,214 @@ const Profile = () => {
         );
     };
 
+    const handleLinkPress = (title: string) => {
+        Alert.alert('Info', `${title} page is not implemented yet.`);
+    };
+
     const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : 'U';
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <View style={styles.avatarContainer}>
-                    <LargeText textStyles={styles.avatarPlaceholder}>{userInitial}</LargeText>
-                </View>
-                <LargeText textStyles={styles.userName}>{user?.name || 'User'}</LargeText>
-                <MediumText color={Theme.color.COLOT_SUBTEXT} textStyles={styles.userEmail}>
-                    {user?.email || 'user@example.com'}
-                </MediumText>
+            {/* Header */}
+            <View style={styles.screenHeader}>
+                <SmallText size={5.5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} color={Theme.color.COLOR_INK}>
+                    My Profile
+                </SmallText>
             </View>
 
-            <View style={styles.content}>
-                <View style={styles.section}>
-                    <Button
-                        onPress={handleLogout}
-                        variant="secondary"
-                        containerStyle={styles.logoutButton}
-                        textStyle={styles.logoutText}
-                    >
-                        Logout
-                    </Button>
+            <ScrollView 
+                style={styles.scrollContainer} 
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+            >
+                {/* Premium User Card */}
+                <View style={[styles.userCard, Theme.shadows.sh_glow_halal]}>
+                    <View style={styles.userCardContent}>
+                        <View style={styles.avatarBubble}>
+                            <SmallText textStyles={styles.avatarText} size={6} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                                {userInitial}
+                            </SmallText>
+                        </View>
+                        <View style={styles.userInfo}>
+                            <SmallText textStyles={styles.userName} size={4.5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                                {user?.name || 'User'}
+                            </SmallText>
+                            <SmallText textStyles={styles.userEmail} size={3} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM}>
+                                {user?.email || 'user@example.com'}
+                            </SmallText>
+                        </View>
+                    </View>
                 </View>
-            </View>
+
+                {/* Stats Row */}
+                <View style={styles.statsRow}>
+                    <View style={[styles.statBox, Theme.shadows.sh_card]}>
+                        <SmallText textStyles={{ color: Theme.color.COLOR_PRIMARY_GREEN }} size={5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                            {scanCount}
+                        </SmallText>
+                        <SmallText textStyles={styles.statLabel} size={2.6} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM}>
+                            Scans
+                        </SmallText>
+                    </View>
+
+                    <View style={[styles.statBox, Theme.shadows.sh_card]}>
+                        <SmallText textStyles={{ color: Theme.color.COLOR_PRIMARY_GREEN }} size={5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                            12
+                        </SmallText>
+                        <SmallText textStyles={styles.statLabel} size={2.6} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM}>
+                            Saved
+                        </SmallText>
+                    </View>
+
+                    <View style={[styles.statBox, Theme.shadows.sh_card]}>
+                        <SmallText textStyles={{ color: Theme.color.COLOR_PRIMARY_GREEN }} size={5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                            3d
+                        </SmallText>
+                        <SmallText textStyles={styles.statLabel} size={2.6} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM}>
+                            Streak
+                        </SmallText>
+                    </View>
+                </View>
+
+                {/* Preferences Group */}
+                <View style={styles.groupContainer}>
+                    <SmallText textStyles={styles.groupTitle} size={2.8} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                        PREFERENCES
+                    </SmallText>
+                    <View style={[styles.groupCard, Theme.shadows.sh_card]}>
+                        {/* Notifications */}
+                        <View style={styles.settingsRow}>
+                            <View style={styles.rowLabelContainer}>
+                                <View style={[styles.iconWrapper, { backgroundColor: '#EBF5FF' }]}>
+                                    <Icon name="notifications-outline" size={18} color="#2563EB" />
+                                </View>
+                                <SmallText textStyles={styles.rowLabel} size={3.4} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                                    Push Notifications
+                                </SmallText>
+                            </View>
+                            <Switch
+                                trackColor={{ false: '#D1D5DB', true: '#A8DCC1' }}
+                                thumbColor={pushNotifications ? Theme.color.COLOR_PRIMARY_GREEN : '#F3F4F6'}
+                                ios_backgroundColor="#D1D5DB"
+                                onValueChange={setPushNotifications}
+                                value={pushNotifications}
+                            />
+                        </View>
+
+                        <View style={styles.divider} />
+
+                        {/* Dark Mode */}
+                        <View style={styles.settingsRow}>
+                            <View style={styles.rowLabelContainer}>
+                                <View style={[styles.iconWrapper, { backgroundColor: '#F3E8FF' }]}>
+                                    <Icon name="moon-outline" size={18} color="#7C3AED" />
+                                </View>
+                                <SmallText textStyles={styles.rowLabel} size={3.4} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                                    Dark Mode
+                                </SmallText>
+                            </View>
+                            <Switch
+                                trackColor={{ false: '#D1D5DB', true: '#A8DCC1' }}
+                                thumbColor={darkMode ? Theme.color.COLOR_PRIMARY_GREEN : '#F3F4F6'}
+                                ios_backgroundColor="#D1D5DB"
+                                onValueChange={setDarkMode}
+                                value={darkMode}
+                            />
+                        </View>
+
+                        <View style={styles.divider} />
+
+                        {/* History Sync */}
+                        <View style={styles.settingsRow}>
+                            <View style={styles.rowLabelContainer}>
+                                <View style={[styles.iconWrapper, { backgroundColor: '#E0F2FE' }]}>
+                                    <Icon name="sync-outline" size={18} color="#0369A1" />
+                                </View>
+                                <SmallText textStyles={styles.rowLabel} size={3.4} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                                    Keep Scan History
+                                </SmallText>
+                            </View>
+                            <Switch
+                                trackColor={{ false: '#D1D5DB', true: '#A8DCC1' }}
+                                thumbColor={historySync ? Theme.color.COLOR_PRIMARY_GREEN : '#F3F4F6'}
+                                ios_backgroundColor="#D1D5DB"
+                                onValueChange={setHistorySync}
+                                value={historySync}
+                            />
+                        </View>
+                    </View>
+                </View>
+
+                {/* Privacy & Support Group */}
+                <View style={styles.groupContainer}>
+                    <SmallText textStyles={styles.groupTitle} size={2.8} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                        HELP & SUPPORT
+                    </SmallText>
+                    <View style={[styles.groupCard, Theme.shadows.sh_card]}>
+                        <TouchableOpacity style={styles.settingsLinkRow} onPress={() => handleLinkPress('Privacy Policy')} activeOpacity={0.7}>
+                            <View style={styles.rowLabelContainer}>
+                                <View style={[styles.iconWrapper, { backgroundColor: '#ECFDF5' }]}>
+                                    <Icon name="shield-checkmark-outline" size={18} color="#059669" />
+                                </View>
+                                <SmallText textStyles={styles.rowLabel} size={3.4} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                                    Privacy Policy
+                                </SmallText>
+                            </View>
+                            <Icon name="chevron-forward" size={16} color={Theme.color.COLOR_MUTED_2} />
+                        </TouchableOpacity>
+
+                        <View style={styles.divider} />
+
+                        <TouchableOpacity style={styles.settingsLinkRow} onPress={() => handleLinkPress('Terms of Service')} activeOpacity={0.7}>
+                            <View style={styles.rowLabelContainer}>
+                                <View style={[styles.iconWrapper, { backgroundColor: '#FDF2F8' }]}>
+                                    <Icon name="document-text-outline" size={18} color="#DB2777" />
+                                </View>
+                                <SmallText textStyles={styles.rowLabel} size={3.4} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                                    Terms of Service
+                                </SmallText>
+                            </View>
+                            <Icon name="chevron-forward" size={16} color={Theme.color.COLOR_MUTED_2} />
+                        </TouchableOpacity>
+
+                        <View style={styles.divider} />
+
+                        <TouchableOpacity style={styles.settingsLinkRow} onPress={() => handleLinkPress('Help & Support')} activeOpacity={0.7}>
+                            <View style={styles.rowLabelContainer}>
+                                <View style={[styles.iconWrapper, { backgroundColor: '#FFF7ED' }]}>
+                                    <Icon name="help-circle-outline" size={18} color="#D97706" />
+                                </View>
+                                <SmallText textStyles={styles.rowLabel} size={3.4} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                                    Help & Support
+                                </SmallText>
+                            </View>
+                            <Icon name="chevron-forward" size={16} color={Theme.color.COLOR_MUTED_2} />
+                        </TouchableOpacity>
+                    </View>
+                </View>
+
+                {/* Account Section */}
+                <View style={styles.groupContainer}>
+                    <SmallText textStyles={styles.groupTitle} size={2.8} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                        ACCOUNT
+                    </SmallText>
+                    <View style={[styles.groupCard, Theme.shadows.sh_card]}>
+                        <TouchableOpacity style={styles.settingsLinkRow} onPress={handleLogout} activeOpacity={0.7}>
+                            <View style={styles.rowLabelContainer}>
+                                <View style={[styles.iconWrapper, { backgroundColor: Theme.color.COLOR_HARAM_BG }]}>
+                                    <Icon name="log-out-outline" size={18} color={Theme.color.COLOR_HARAM} />
+                                </View>
+                                <SmallText textStyles={StyleSheet.flatten([styles.rowLabel, { color: Theme.color.COLOR_HARAM }])} size={3.4} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                                    Logout
+                                </SmallText>
+                            </View>
+                            <Icon name="chevron-forward" size={16} color={Theme.color.COLOR_HARAM} />
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </ScrollView>
         </SafeAreaView>
     );
-};
+}
 
 export default Profile;

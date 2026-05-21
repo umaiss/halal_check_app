@@ -16,7 +16,7 @@ export const axiosBaseQuery =
     > =>
         async ({ url, method, data, params }, { getState }) => {
             try {
-                const token = (getState() as RootState).auth.token;
+                const {token} = (getState() as RootState).auth;
                 const result = await axiosInstance({
                     url: baseUrl + url,
                     method,

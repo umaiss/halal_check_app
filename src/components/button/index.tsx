@@ -39,7 +39,7 @@ const Button: React.FC<ButtonProps> = ({
   textStyle,
   textProps = {},
   disabled = false,
-  buttonTextColor = Theme.color.COLOR_WHITE,
+  buttonTextColor,
   fontFamily = Theme.fonts.FONT_NUNITO_MEDIUM,
   size = 4.5,
   isLoading = false,
@@ -57,6 +57,17 @@ const Button: React.FC<ButtonProps> = ({
       },
     }), [variant, withShadow, disabled]);
 
+  const textColor = useMemo(() => {
+    if (buttonTextColor) return buttonTextColor;
+    if (variant === 'secondary') return Theme.color.COLOR_PRIMARY_GREEN;
+    return Theme.color.COLOR_WHITE;
+  }, [buttonTextColor, variant]);
+
+  const indicatorColor = useMemo(() => {
+    if (variant === 'secondary') return Theme.color.COLOR_PRIMARY_GREEN;
+    return ActivityIndicatorColor;
+  }, [variant, ActivityIndicatorColor]);
+
   return (
     <TouchableOpacity
       style={[getStyles.container, containerStyle]}
@@ -65,10 +76,10 @@ const Button: React.FC<ButtonProps> = ({
       {...touchableOpacityProps}
     >
       {isLoading ? (
-        <ActivityIndicator color={ActivityIndicatorColor} size={width(6.5)} />
+        <ActivityIndicator color={indicatorColor} size={width(6.5)} />
       ) : (
         <SmallText
-          color={buttonTextColor}
+          color={textColor}
           textStyles={textStyle}
           textProps={textProps}
           size={size}

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { Provider } from 'react-redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import StackNavigator from './src/navigation/StackNavigator';
 import { store } from './src/redux/store';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import ASYNC_KEYS from './src/utils/async-keys';
 import Theme from './src/theme/theme';
 
@@ -63,10 +63,10 @@ function App() {
 
 const styles = StyleSheet.create({
   loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Theme.color.COLOR_WHITE,
+    flex: 1,
+    justifyContent: 'center',
   },
 });
 

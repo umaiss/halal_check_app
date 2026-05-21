@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from "axios";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from "../utils/constant";
 import { store } from "../redux/store";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import ASYNC_KEYS from "../utils/async-keys";
 import { logout, setCredentials } from "../redux/slices/auth/authSlice";
 
@@ -98,9 +98,7 @@ axiosInstance.interceptors.response.use(
                         }
                         return axiosInstance(originalRequest);
                     })
-                    .catch((err) => {
-                        return Promise.reject(err);
-                    });
+                    .catch((err) => Promise.reject(err));
             }
 
             originalRequest._retry = true;

@@ -1,0 +1,337 @@
+yarn run v1.22.22
+$ eslint . --ext .js,.jsx,.ts,.tsx
+
+/Users/umais.r/Documents/DPLprojects/halal_app/.eslintrc.js
+  0:0  error  Parsing error: ESLint was configured to run on `<tsconfigRootDir>/.eslintrc.js` using `parserOptions.project`: <tsconfigRootDir>/tsconfig.json
+However, that TSConfig does not include this file. Either:
+- Change ESLint's list of included files to not include this file
+- Change that TSConfig to include this file
+- Create a new TSConfig that includes this file and include it in your parserOptions.project
+See the typescript-eslint docs for more info: https://typescript-eslint.io/troubleshooting/typed-linting#i-get-errors-telling-me-eslint-was-configured-to-run--however-that-tsconfig-does-not--none-of-those-tsconfigs-include-this-file
+
+/Users/umais.r/Documents/DPLprojects/halal_app/App.tsx
+  24:7  warning  Unexpected console statement  no-console
+  33:7  warning  Unexpected console statement  no-console
+  34:7  warning  Unexpected console statement  no-console
+  42:7  warning  Unexpected console statement  no-console
+  44:7  warning  Unexpected console statement  no-console
+
+/Users/umais.r/Documents/DPLprojects/halal_app/metro.config.js
+  1:51  error  Unable to resolve path to module '@react-native/metro-config'  import/no-unresolved
+
+/Users/umais.r/Documents/DPLprojects/halal_app/src/api/axiosBase.ts
+  21:13  error    Assignment to property of function parameter 'config'  no-param-reassign
+  25:9   warning  Unexpected console statement                           no-console
+  37:9   warning  Unexpected console statement                           no-console
+  58:9   warning  Unexpected console statement                           no-console
+  69:9   warning  Unexpected console statement                           no-console
+
+/Users/umais.r/Documents/DPLprojects/halal_app/src/components/button/index.tsx
+  17:3   error  propType "children" is not required, but has no corresponding defaultProps declaration                react/require-default-props
+  18:3   error  propType "variant" is not required, but has no corresponding defaultProps declaration                 react/require-default-props
+  19:3   error  propType "withShadow" is not required, but has no corresponding defaultProps declaration              react/require-default-props
+  20:3   error  propType "containerStyle" is not required, but has no corresponding defaultProps declaration          react/require-default-props
+  21:3   error  propType "touchableOpacityProps" is not required, but has no corresponding defaultProps declaration   react/require-default-props
+  22:3   error  propType "textStyle" is not required, but has no corresponding defaultProps declaration               react/require-default-props
+  23:3   error  propType "textProps" is not required, but has no corresponding defaultProps declaration               react/require-default-props
+  24:3   error  propType "disabled" is not required, but has no corresponding defaultProps declaration                react/require-default-props
+  25:3   error  propType "buttonTextColor" is not required, but has no corresponding defaultProps declaration         react/require-default-props
+  26:3   error  propType "fontFamily" is not required, but has no corresponding defaultProps declaration              react/require-default-props
+  27:3   error  propType "size" is not required, but has no corresponding defaultProps declaration                    react/require-default-props
+  28:3   error  propType "isLoading" is not required, but has no corresponding defaultProps declaration               react/require-default-props
+  29:3   error  propType "ActivityIndicatorColor" is not required, but has no corresponding defaultProps declaration  react/require-default-props
+  32:39  error  Function component is not a function declaration                                                      react/function-component-definition
+  76:7   error  Prop spreading is forbidden                                                                           react/jsx-props-no-spreading
+
+/Users/umais.r/Documents/DPLprojects/halal_app/src/components/button/styles.ts
+  2:18  warning  'width' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/umais.r/Documents/DPLprojects/halal_app/src/components/input/index.tsx
+   20:5   error    propType "inputStyle" is not required, but has no corresponding defaultProps declaration        react/require-default-props
+   21:5   error    propType "containerStyle" is not required, but has no corresponding defaultProps declaration    react/require-default-props
+   22:5   error    propType "placeholder" is not required, but has no corresponding defaultProps declaration       react/require-default-props
+   23:5   error    propType "placeholderColor" is not required, but has no corresponding defaultProps declaration  react/require-default-props
+   24:5   error    propType "inputProps" is not required, but has no corresponding defaultProps declaration        react/require-default-props
+   25:5   error    propType "keyboardType" is not required, but has no corresponding defaultProps declaration      react/require-default-props
+   26:5   error    propType "onSubmitEditing" is not required, but has no corresponding defaultProps declaration   react/require-default-props
+   27:5   error    propType "returnKeyType" is not required, but has no corresponding defaultProps declaration     react/require-default-props
+   28:5   error    propType "secureTextEntry" is not required, but has no corresponding defaultProps declaration   react/require-default-props
+   29:5   error    propType "control" is not required, but has no corresponding defaultProps declaration           react/require-default-props
+   30:5   error    propType "name" is not required, but has no corresponding defaultProps declaration              react/require-default-props
+   31:5   error    propType "label" is not required, but has no corresponding defaultProps declaration             react/require-default-props
+   32:5   error    propType "inputContainer" is not required, but has no corresponding defaultProps declaration    react/require-default-props
+   33:5   error    propType "renderRightIcon" is not required, but has no corresponding defaultProps declaration   react/require-default-props
+   34:5   error    propType "mandatory" is not required, but has no corresponding defaultProps declaration         react/require-default-props
+   35:5   error    propType "onFocus" is not required, but has no corresponding defaultProps declaration           react/require-default-props
+   36:5   error    propType "onBlur" is not required, but has no corresponding defaultProps declaration            react/require-default-props
+   37:5   error    propType "onChangeText" is not required, but has no corresponding defaultProps declaration      react/require-default-props
+   38:5   error    propType "value" is not required, but has no corresponding defaultProps declaration             react/require-default-props
+   39:5   error    propType "error" is not required, but has no corresponding defaultProps declaration             react/require-default-props
+   40:5   error    propType "icon" is not required, but has no corresponding defaultProps declaration              react/require-default-props
+   41:5   error    propType "variant" is not required, but has no corresponding defaultProps declaration           react/require-default-props
+   54:9   warning  'control' is defined but never used. Allowed unused args must match /^_/u                       @typescript-eslint/no-unused-vars
+   55:9   warning  'name' is defined but never used. Allowed unused args must match /^_/u                          @typescript-eslint/no-unused-vars
+  141:21  error    Prop spreading is forbidden                                                                     react/jsx-props-no-spreading
+
+/Users/umais.r/Documents/DPLprojects/halal_app/src/components/screen-wrapper/index.tsx
+   92:6   error    React Hook useEffect has a missing dependency: 'bannerAnim'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   94:57  error    Function component is not a function declaration                                                               react/function-component-definition
+   95:28  error    Prop spreading is forbidden                                                                                    react/jsx-props-no-spreading
+  109:11  warning  Inline style: { paddingTop: 'translucent ? 0 : insets.top' }                                                   react-native/no-inline-styles
+
+/Users/umais.r/Documents/DPLprojects/halal_app/src/components/spacer/index.tsx
+  5:3  error  propType "horizontal" is not required, but has no corresponding defaultProps declaration  react/require-default-props
+  6:3  error  propType "vertical" is not required, but has no corresponding defaultProps declaration    react/require-default-props
+
+/Users/umais.r/Documents/DPLprojects/halal_app/src/components/text/index.tsx
+   14:3   error  propType "children" is not required, but has no corresponding defaultProps declaration            react/require-default-props
+   14:3   error  propType "children" is not required, but has no corresponding defaultProps declaration            react/require-default-props
+   14:3   error  propType "children" is not required, but has no corresponding defaultProps declaration            react/require-default-props
+   14:3   error  propType "children" is not required, but has no corresponding defaultProps declaration            react/require-default-props
+   15:3   error  propType "size" is not required, but has no corresponding defaultProps declaration                react/require-default-props
+   15:3   error  propType "size" is not required, but has no corresponding defaultProps declaration                react/require-default-props
+   15:3   error  propType "size" is not required, but has no corresponding defaultProps declaration                react/require-default-props
+   15:3   error  propType "size" is not required, but has no corresponding defaultProps declaration                react/require-default-props
+   16:3   error  propType "textAlign" is not required, but has no corresponding defaultProps declaration           react/require-default-props
+   16:3   error  propType "textAlign" is not required, but has no corresponding defaultProps declaration           react/require-default-props
+   16:3   error  propType "textAlign" is not required, but has no corresponding defaultProps declaration           react/require-default-props
+   16:3   error  propType "textAlign" is not required, but has no corresponding defaultProps declaration           react/require-default-props
+   17:3   error  propType "color" is not required, but has no corresponding defaultProps declaration               react/require-default-props
+   17:3   error  propType "color" is not required, but has no corresponding defaultProps declaration               react/require-default-props
+   17:3   error  propType "color" is not required, but has no corresponding defaultProps declaration               react/require-default-props
+   17:3   error  propType "color" is not required, but has no corresponding defaultProps declaration               react/require-default-props
+   18:3   error  propType "textStyles" is not required, but has no corresponding defaultProps declaration          react/require-default-props
+   18:3   error  propType "textStyles" is not required, but has no corresponding defaultProps declaration          react/require-default-props
+   18:3   error  propType "textStyles" is not required, but has no corresponding defaultProps declaration          react/require-default-props
+   18:3   error  propType "textStyles" is not required, but has no corresponding defaultProps declaration          react/require-default-props
+   19:3   error  propType "textProps" is not required, but has no corresponding defaultProps declaration           react/require-default-props
+   19:3   error  propType "textProps" is not required, but has no corresponding defaultProps declaration           react/require-default-props
+   19:3   error  propType "textProps" is not required, but has no corresponding defaultProps declaration           react/require-default-props
+   19:3   error  propType "textProps" is not required, but has no corresponding defaultProps declaration           react/require-default-props
+   20:3   error  propType "onPress" is not required, but has no corresponding defaultProps declaration             react/require-default-props
+   20:3   error  propType "onPress" is not required, but has no corresponding defaultProps declaration             react/require-default-props
+   20:3   error  propType "onPress" is not required, but has no corresponding defaultProps declaration             react/require-default-props
+   20:3   error  propType "onPress" is not required, but has no corresponding defaultProps declaration             react/require-default-props
+   21:3   error  propType "fontFamily" is not required, but has no corresponding defaultProps declaration          react/require-default-props
+   21:3   error  propType "fontFamily" is not required, but has no corresponding defaultProps declaration          react/require-default-props
+   21:3   error  propType "fontFamily" is not required, but has no corresponding defaultProps declaration          react/require-default-props
+   21:3   error  propType "fontFamily" is not required, but has no corresponding defaultProps declaration          react/require-default-props
+   22:3   error  propType "numberOfLines" is not required, but has no corresponding defaultProps declaration       react/require-default-props
+   22:3   error  propType "numberOfLines" is not required, but has no corresponding defaultProps declaration       react/require-default-props
+   22:3   error  propType "numberOfLines" is not required, but has no corresponding defaultProps declaration       react/require-default-props
+   22:3   error  propType "numberOfLines" is not required, but has no corresponding defaultProps declaration       react/require-default-props
+   26:3   error  propType "textDecorationLine" is not required, but has no corresponding defaultProps declaration  react/require-default-props
+   29:53  error  Function component is not a function declaration                                                  react/function-component-definition
+   51:77  error  Prop spreading is forbidden                                                                       react/jsx-props-no-spreading
+   58:54  error  Function component is not a function declaration                                                  react/function-component-definition
+   80:77  error  Prop spreading is forbidden                                                                       react/jsx-props-no-spreading
+   87:53  error  Function component is not a function declaration                                                  react/function-component-definition
+  109:77  error  Prop spreading is forbidden                                                                       react/jsx-props-no-spreading
+  116:60  error  Function component is not a function declaration                                                  react/function-component-definition
+  140:77  error  Prop spreading is forbidden                                                                       react/jsx-props-no-spreading
+
+/Users/umais.r/Documents/DPLprojects/halal_app/src/navigation/BottomTabNavigator.tsx
+   7:16  warning  'Login' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+   7:32  warning  'Scan' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+  19:29  warning  Do not define components during render. React will see a new component type on every render and destroy the entire subtree’s DOM nodes and state (https://reactjs.org/docs/reconciliation.html#elements-of-different-types). Instead, move this component definition out of the parent component “BottomTabNavigator” and pass data as props. If you want to allow component creation in props, set allowAsProps option to true  react/no-unstable-nested-components
+
+/Users/umais.r/Documents/DPLprojects/halal_app/src/redux/authApi/authApi.ts
+  4:25  warning  'BASE_URL' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/umais.r/Documents/DPLprojects/halal_app/src/screens/History/index.tsx
+   29:63  warning  'apiError' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  141:25  warning  Unexpected console statement                   no-console
+  161:25  warning  Unexpected console statement                   no-console
+  258:45  warning  Inline style: { letterSpacing: 0.4 }           react-native/no-inline-styles
+
+/Users/umais.r/Documents/DPLprojects/halal_app/src/screens/Home/index.tsx
+   98:8    error    React Hook useEffect has a missing dependency: 'navigation'. Either include it or remove the dependency array                                                                                                                                                                                              react-hooks/exhaustive-deps
+  135:13   warning  Unexpected console statement                                                                                                                                                                                                                                                                               no-console
+  159:13   warning  Unexpected console statement                                                                                                                                                                                                                                                                               no-console
+  181:21   warning  Unexpected console statement                                                                                                                                                                                                                                                                               no-console
+  221:13   warning  Unexpected console statement                                                                                                                                                                                                                                                                               no-console
+  298:140  warning  Inline style: { letterSpacing: 1 }                                                                                                                                                                                                                                                                         react-native/no-inline-styles
+  301:132  warning  Inline style: { marginTop: 4, marginBottom: 4 }                                                                                                                                                                                                                                                            react-native/no-inline-styles
+  302:40   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                                            react/no-unescaped-entities
+  304:132  warning  Inline style: { marginBottom: 18 }                                                                                                                                                                                                                                                                         react-native/no-inline-styles
+  305:68   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                                            react/no-unescaped-entities
+  314:41   warning  Inline style: { marginHorizontal: 0 }                                                                                                                                                                                                                                                                      react-native/no-inline-styles
+  325:34   warning  Inline style: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 8,
+  marginTop: 12
+}                                                                                                                                                                    react-native/no-inline-styles
+  329:38   warning  Inline style: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: "allCaptured ? Theme.color.COLOR_PRIMARY_GREEN_BG : 'transparent'",
+  paddingHorizontal: 8,
+  paddingVertical: 2,
+  borderRadius: 12
+}                                                                                  react-native/no-inline-styles
+  337:125  warning  Inline style: { marginRight: 4 }                                                                                                                                                                                                                                                                           react-native/no-inline-styles
+  366:41   warning  Inline style: {
+  backgroundColor: "filled ? Theme.color.COLOR_PRIMARY_GREEN : '#C5CCC9'",
+  width: 18,
+  height: 18,
+  borderRadius: 9,
+  justifyContent: 'center',
+  alignItems: 'center',
+  left: 6,
+  top: 6,
+  position: 'absolute'
+}                                                                 react-native/no-inline-styles
+  391:72   warning  Inline style: {
+  width: 28,
+  height: 28,
+  borderRadius: 14,
+  backgroundColor: '#FFFFFF',
+  borderWidth: 1,
+  borderColor: '#ECEFF1',
+  justifyContent: 'center',
+  alignItems: 'center'
+}                                                                                                              react-native/no-inline-styles
+  411:50   warning  Inline style: {
+  position: 'absolute',
+  bottom: 8,
+  left: 0,
+  right: 0,
+  paddingHorizontal: 4
+}                                                                                                                                                                                                       react-native/no-inline-styles
+  428:29   warning  Inline style: {
+  backgroundColor: "canAnalyse ? Theme.color.COLOR_PRIMARY_GREEN : '#ECEFF1'",
+  opacity: 'isProcessing ? 0.8 : 1',
+  flexDirection: 'row',
+  justifyContent: 'center',
+  alignItems: 'center',
+  gap: 8,
+  shadowColor: "canAnalyse ? Theme.color.COLOR_PRIMARY_GREEN : 'transparent'"
+}  react-native/no-inline-styles
+  463:69   warning  Inline style: { alignSelf: 'center', marginTop: 12 }                                                                                                                                                                                                                                                       react-native/no-inline-styles
+  474:32   warning  Inline style: {
+  backgroundColor: '#0F1411',
+  borderRadius: 18,
+  padding: 16,
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 24
+}                                                                                                                                                      react-native/no-inline-styles
+  485:38   warning  Inline style: {
+  width: 44,
+  height: 44,
+  borderRadius: 14,
+  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  borderWidth: 1,
+  borderColor: 'rgba(255, 255, 255, 0.18)',
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginRight: 14
+}                                                        react-native/no-inline-styles
+  498:38   warning  Inline style: { flex: 1 }                                                                                                                                                                                                                                                                                  react-native/no-inline-styles
+  502:96   warning  Inline style: { marginTop: 2 }                                                                                                                                                                                                                                                                             react-native/no-inline-styles
+  535:95   warning  Inline style: { width: '100%', height: '100%' }                                                                                                                                                                                                                                                            react-native/no-inline-styles
+
+/Users/umais.r/Documents/DPLprojects/halal_app/src/screens/IngredientsResult/index.tsx
+   25:32  warning  'halalCheckResultFromAPI' is assigned a value but never used                                                                                                  @typescript-eslint/no-unused-vars
+  131:13  warning  Unexpected console statement                                                                                                                                  no-console
+  136:8   error    React Hook useEffect has missing dependencies: 'halalCheckResult', 'handleHalalCheck', and 'ingredients'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  159:13  warning  Unexpected console statement                                                                                                                                  no-console
+  162:13  warning  Unexpected console statement                                                                                                                                  no-console
+  172:17  warning  Unexpected console statement                                                                                                                                  no-console
+  174:17  warning  Unexpected console statement                                                                                                                                  no-console
+  177:13  warning  Unexpected console statement                                                                                                                                  no-console
+  213:13  warning  Unexpected console statement                                                                                                                                  no-console
+  264:13  warning  Unexpected console statement                                                                                                                                  no-console
+  281:13  warning  Unexpected console statement                                                                                                                                  no-console
+  445:45  warning  Inline style: { backgroundColor: 'rgba(255, 255, 255, 0.7)', borderWidth: 1 }                                                                                 react-native/no-inline-styles
+  573:58  error    Do not use Array index in keys                                                                                                                                react/no-array-index-key
+  632:72  warning  Inline style: { marginLeft: 6 }                                                                                                                               react-native/no-inline-styles
+  664:50  warning  Inline style: { flex: 1 }                                                                                                                                     react-native/no-inline-styles
+  710:42  warning  Inline style: { flex: 1 }                                                                                                                                     react-native/no-inline-styles
+  734:50  warning  Inline style: { flex: 1 }                                                                                                                                     react-native/no-inline-styles
+  756:50  warning  Inline style: { flex: 1 }                                                                                                                                     react-native/no-inline-styles
+  780:52  error    Do not use Array index in keys                                                                                                                                react/no-array-index-key
+  793:68  warning  Inline style: { color: 'rgba(255,255,255,0.7)' }                                                                                                              react-native/no-inline-styles
+  802:94  warning  Inline style: { opacity: 0.7 }                                                                                                                                react-native/no-inline-styles
+
+/Users/umais.r/Documents/DPLprojects/halal_app/src/screens/Login/index.tsx
+   55:17  warning  Unexpected console statement                                     no-console
+   57:17  warning  Unexpected console statement                                     no-console
+   75:17  warning  Unexpected console statement                                     no-console
+   94:34  warning  Inline style: { flex: 1 }                                        react-native/no-inline-styles
+  171:70  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/Users/umais.r/Documents/DPLprojects/halal_app/src/screens/Onboarding/index.tsx
+   82:7   warning  Unexpected console statement    no-console
+  229:18  error    Do not use Array index in keys  react/no-array-index-key
+
+/Users/umais.r/Documents/DPLprojects/halal_app/src/screens/Profile/index.tsx
+    2:68  warning  'Platform' is defined but never used          @typescript-eslint/no-unused-vars
+   46:29  warning  Unexpected console statement                  no-console
+  134:67  warning  Inline style: { backgroundColor: '#EBF5FF' }  react-native/no-inline-styles
+  155:67  warning  Inline style: { backgroundColor: '#F3E8FF' }  react-native/no-inline-styles
+  176:67  warning  Inline style: { backgroundColor: '#E0F2FE' }  react-native/no-inline-styles
+  202:67  warning  Inline style: { backgroundColor: '#ECFDF5' }  react-native/no-inline-styles
+  216:67  warning  Inline style: { backgroundColor: '#FDF2F8' }  react-native/no-inline-styles
+  230:67  warning  Inline style: { backgroundColor: '#FFF7ED' }  react-native/no-inline-styles
+
+/Users/umais.r/Documents/DPLprojects/halal_app/src/screens/Scan/index.tsx
+   52:8    error    React Hook useEffect has a missing dependency: 'requestPermission'. Either include it or remove the dependency array                           react-hooks/exhaustive-deps
+   84:13   warning  Unexpected console statement                                                                                                                   no-console
+   91:13   warning  Unexpected console statement                                                                                                                   no-console
+  122:13   warning  Unexpected console statement                                                                                                                   no-console
+  139:133  warning  Inline style: { marginTop: 20, marginBottom: 8 }                                                                                               react-native/no-inline-styles
+  142:106  warning  Inline style: { marginBottom: 30 }                                                                                                             react-native/no-inline-styles
+  163:133  warning  Inline style: { marginTop: 20, marginBottom: 8 }                                                                                               react-native/no-inline-styles
+  187:34   warning  Inline style: { flex: 1, backgroundColor: 'rgba(10, 16, 13, 0.4)' }                                                                            react-native/no-inline-styles
+  200:34   warning  Inline style: { alignItems: 'center' }                                                                                                         react-native/no-inline-styles
+  201:136  warning  Inline style: { letterSpacing: 1 }                                                                                                             react-native/no-inline-styles
+  212:29   warning  Inline style: {
+  backgroundColor: "flashMode === 'on' ? '#FFFFFF' : 'rgba(255,255,255,0.1)'"
+}                                                react-native/no-inline-styles
+  238:118  warning  Inline style: { marginRight: 6 }                                                                                                               react-native/no-inline-styles
+  253:33   warning  Inline style: {
+  width: 'idx === slotIndex ? 24 : 8',
+  backgroundColor: "idx === slotIndex ? '#FFFFFF' : 'rgba(255,255,255,0.3)'"
+}          react-native/no-inline-styles
+  282:29   warning  Inline style: {
+  width: 'isShutterPressed ? 56 : 68',
+  height: 'isShutterPressed ? 56 : 68',
+  borderRadius: 'isShutterPressed ? 28 : 34'
+}  react-native/no-inline-styles
+
+/Users/umais.r/Documents/DPLprojects/halal_app/src/screens/Signup/index.tsx
+   88:17  warning  Unexpected console statement  no-console
+  106:17  warning  Unexpected console statement  no-console
+  121:34  warning  Inline style: { flex: 1 }     react-native/no-inline-styles
+
+/Users/umais.r/Documents/DPLprojects/halal_app/src/screens/Upload/index.tsx
+   72:13  warning  Unexpected console statement                         no-console
+  100:13  warning  Unexpected console statement                         no-console
+  112:13  warning  Unexpected console statement                         no-console
+  127:19  warning  'uploadPromises' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  135:21  warning  Unexpected console statement                         no-console
+  177:13  warning  Unexpected console statement                         no-console
+  246:41  warning  Inline style: { marginHorizontal: 0 }                react-native/no-inline-styles
+
+/Users/umais.r/Documents/DPLprojects/halal_app/src/screens/Upload/styles.ts
+  5:7  warning  'GRID_ITEM_WIDTH' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/umais.r/Documents/DPLprojects/halal_app/src/utils/imageUpload.ts
+   3:10  warning  'Platform' is defined but never used       @typescript-eslint/no-unused-vars
+   6:58  error    Default parameters should be last          default-param-last
+  29:17  warning  'data' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  36:13  warning  Unexpected console statement               no-console
+  46:9   warning  Unexpected console statement               no-console
+
+/Users/umais.r/Documents/DPLprojects/halal_app/src/utils/scanHistoryStorage.ts
+  14:13  warning  Unexpected console statement  no-console
+  39:13  warning  Unexpected console statement  no-console
+  52:13  warning  Unexpected console statement  no-console
+  62:13  warning  Unexpected console statement  no-console
+
+✖ 206 problems (101 errors, 105 warnings)
+
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.

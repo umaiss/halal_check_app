@@ -6,32 +6,24 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     alignSelf: 'center',
-    borderRadius: width(100),
+    borderRadius: 14,
     justifyContent: 'center',
     paddingVertical: height(1.7),
     width: '100%'
   },
   disableContainer: {
-    backgroundColor: Theme.color.COLOR_LIGHT_TEXT,
+    backgroundColor: Theme.color.COLOR_MUTED_2,
   },
   primaryContainer: {
-    backgroundColor: Theme.color.COLOR_BLUE,
+    backgroundColor: Theme.color.COLOR_PRIMARY_GREEN,
   },
   secondaryContainer: {
-    borderColor: Theme.color.COLOR_WHITE,
-    borderRadius: width(100),
-    borderWidth: width(0.2)
+    backgroundColor: 'transparent',
+    borderColor: Theme.color.COLOR_PRIMARY_GREEN,
+    borderWidth: 1.5,
   },
   shadow: {
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-
-    shadowRadius: 3.84,
+    ...Theme.shadows.sh_button,
   },
 });
 

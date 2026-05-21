@@ -1,71 +1,93 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, View, Text, SafeAreaView, Linking, TouchableOpacity, ActivityIndicator, Platform, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { CompositeNavigationProp } from '@react-navigation/native';
+import {
+    StyleSheet,
+    View,
+    SafeAreaView,
+    Linking,
+    TouchableOpacity,
+    ActivityIndicator,
+    Platform,
+    Alert,
+} from 'react-native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-// 1. Core Camera components
 import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
-// 2. Text Recognition - using ML Kit for static image processing
-// 3. Navigation types
-import { RootStackParamList, BottomTabParamList } from '../../navigation/types/RootParamList';
+import { launchImageLibrary } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/Ionicons';
+
+import { RootStackParamList } from '../../navigation/types/RootParamList';
 import Theme from '../../theme/theme';
-import TextRecognition from '@react-native-ml-kit/text-recognition';
+import { SmallText, MediumText } from '../../components/text';
 import { height, width } from '../../utils/dimensions';
 
 type ScanNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Scan'>;
+type ScanRouteProp = RouteProp<RootStackParamList, 'Scan'>;
+
+const PHOTO_SLOTS = [
+    { k: 'front', label: 'Front of pack', sub: 'Brand & product name', hint: 'Show the front cover of the package.' },
+    { k: 'back', label: 'Back of pack', sub: 'Manufacturer, barcode', hint: 'Show the back of the package.' },
+    { k: 'ingredients', label: 'Ingredients', sub: 'Full ingredients list', hint: 'Zoom in on the ingredients list.' },
+];
 
 function Scan() {
     const navigation = useNavigation<ScanNavigationProp>();
+    const route = useRoute<ScanRouteProp>();
+    const slotKey = route.params?.slotKey || 'ingredients';
 
-    // --- 1. Permission and Device Setup ---
+    const slot = PHOTO_SLOTS.find(s => s.k === slotKey) || PHOTO_SLOTS[2];
+    const slotIndex = PHOTO_SLOTS.findIndex(s => s.k === slotKey);
+
     const { hasPermission, requestPermission } = useCameraPermission();
     const device = useCameraDevice('back');
     const cameraRef = useRef<Camera>(null);
 
-    // State management
     const [isProcessing, setIsProcessing] = useState(false);
+    const [flashMode, setFlashMode] = useState<'on' | 'off'>('off');
+    const [isShutterPressed, setIsShutterPressed] = useState(false);
 
-    // Request permissions on component load
     useEffect(() => {
         if (!hasPermission) {
             requestPermission();
         }
-    }, [hasPermission]);
+    }, [hasPermission, requestPermission]);
 
-    // --- 2. Process Captured Image with Text Recognition ---
-    const processImageWithTextRecognition = async (imagePath: string) => {
+    const handleSelectFromGallery = async () => {
         try {
-            console.log('Processing image:', imagePath);
+            const result = await launchImageLibrary({
+                mediaType: 'photo',
+                quality: 0.8,
+                selectionLimit: 1,
+            });
 
-            // Process the image file with ML Kit Text Recognition
-            const result = await TextRecognition.recognize(imagePath);
+            if (result.didCancel) return;
 
-            console.log('Text Recognition Result:', JSON.stringify(result, null, 2));
-
-            if (result && result.text) {
-                // Clean and format the extracted text
-                const cleanedText = result.text
-                    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-                    .replace(/\n+/g, ' ') // Replace newlines with space
-                    .trim(); // Remove leading/trailing whitespace
-
-                console.log("Raw extracted text:", result.text);
-                console.log("Cleaned extracted text:", cleanedText);
-
-                return cleanedText;
+            if (result.errorCode) {
+                Alert.alert('Gallery Error', result.errorMessage || 'Failed to open gallery');
+                return;
             }
 
-            return null;
+            if (result.assets && result.assets.length > 0) {
+                const asset = result.assets[0];
+                if (asset.uri) {
+                    navigation.navigate('MainTabs', {
+                        screen: 'Home',
+                        params: {
+                            capturedPhoto: {
+                                slotKey,
+                                uri: asset.uri,
+                            },
+                            existingPhotos: route.params?.existingPhotos,
+                        }
+                    });
+                }
+            }
         } catch (error) {
-            console.error('Error processing image with text recognition:', error);
-            throw error;
+            console.error('Error selecting from gallery in Scan screen:', error);
+            Alert.alert('Error', 'Failed to process gallery selection.');
         }
     };
 
-    // --- 3. Capture and Process Image ---
-    const captureAndProcessImage = async () => {
+    const capturePhoto = async () => {
         if (!cameraRef.current || !device) {
             console.log('Camera not ready');
             return;
@@ -73,68 +95,62 @@ function Scan() {
 
         try {
             setIsProcessing(true);
+            setIsShutterPressed(true);
 
-            // Capture photo
             const photo = await cameraRef.current.takePhoto({
-                flash: 'off',
+                flash: flashMode,
             });
 
-            console.log('Photo captured:', photo.path);
+            setIsShutterPressed(false);
 
-            // Set image path - ML Kit expects file:// URI on Android, direct path on iOS
-            let imagePath: string;
             let imageUri: string;
-
             if (Platform.OS === 'android') {
-                // Android: ensure file:// prefix
-                imagePath = photo.path.startsWith('file://') ? photo.path : `file://${photo.path}`;
-                imageUri = imagePath;
+                imageUri = photo.path.startsWith('file://') ? photo.path : `file://${photo.path}`;
             } else {
-                // iOS: use direct path
-                imagePath = photo.path.startsWith('file://') ? photo.path.replace('file://', '') : photo.path;
-                imageUri = `file://${imagePath}`;
+                imageUri = `file://${photo.path}`;
             }
 
-            console.log('Image path for processing:', imagePath);
-
-            // Process the captured image
-            const extractedText = await processImageWithTextRecognition(imagePath);
-
-            // Navigate to results screen
-            if (extractedText) {
-                navigation.navigate('IngredientsResult', {
-                    ingredients: extractedText,
-                    ingredients_hash: '', // Add missing required field
-                    imageUri: imageUri,
-                });
-            } else {
-                // Show error and stay on camera screen
-                Alert.alert('No Text Detected', 'Please try again with better lighting and clear text.');
-            }
-
+            navigation.navigate('MainTabs', {
+                screen: 'Home',
+                params: {
+                    capturedPhoto: {
+                        slotKey,
+                        uri: imageUri,
+                    },
+                    existingPhotos: route.params?.existingPhotos,
+                }
+            });
         } catch (error) {
-            console.error('Error capturing/processing image:', error);
-            Alert.alert('Error', 'Error processing image. Please try again.');
+            console.error('Error capturing photo:', error);
+            Alert.alert('Error', 'Failed to capture photo. Please try again.');
+            setIsShutterPressed(false);
         } finally {
             setIsProcessing(false);
         }
     };
 
-    // --- 3. Permission and Device Error Handling ---
+    const handleSkip = () => {
+        navigation.goBack();
+    };
+
     if (!hasPermission) {
         return (
             <SafeAreaView style={styles.container}>
                 <View style={styles.errorContainer}>
-                    <Icon name="camera-outline" size={64} color={Theme.color.COLOT_SUBTEXT} />
-                    <Text style={styles.errorTitle}>Camera Permission Required</Text>
-                    <Text style={styles.errorText}>
+                    <Icon name="camera-outline" size={64} color={Theme.color.COLOR_MUTED_2} />
+                    <MediumText size={4.5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} color={Theme.color.COLOR_INK} textStyles={{ marginTop: 20, marginBottom: 8 }}>
+                        Camera Permission Required
+                    </MediumText>
+                    <SmallText size={3.5} color={Theme.color.COLOR_MUTED} textAlign="center" textStyles={{ marginBottom: 30 }}>
                         We need camera access to scan ingredient labels
-                    </Text>
+                    </SmallText>
                     <TouchableOpacity
                         style={styles.permissionButton}
                         onPress={() => Linking.openSettings()}
                     >
-                        <Text style={styles.permissionButtonText}>Open Settings</Text>
+                        <SmallText size={3.8} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} color="#FFFFFF">
+                            Open Settings
+                        </SmallText>
                     </TouchableOpacity>
                 </View>
             </SafeAreaView>
@@ -145,17 +161,18 @@ function Scan() {
         return (
             <SafeAreaView style={styles.container}>
                 <View style={styles.errorContainer}>
-                    <Icon name="alert-circle-outline" size={64} color={Theme.color.COLOR_RED} />
-                    <Text style={styles.errorTitle}>No Camera Device Found</Text>
-                    <Text style={styles.errorText}>
+                    <Icon name="alert-circle-outline" size={64} color={Theme.color.COLOR_HARAM} />
+                    <MediumText size={4.5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} color={Theme.color.COLOR_INK} textStyles={{ marginTop: 20, marginBottom: 8 }}>
+                        No Camera Device Found
+                    </MediumText>
+                    <SmallText size={3.5} color={Theme.color.COLOR_MUTED} textAlign="center">
                         Please ensure your device has a working camera
-                    </Text>
+                    </SmallText>
                 </View>
             </SafeAreaView>
         );
     }
 
-    // --- 4. Render Camera and Overlay ---
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.cameraContainer}>
@@ -167,43 +184,123 @@ function Scan() {
                     photo={true}
                 />
 
-                {/* --- Enhanced Overlay with Frame and Capture Button --- */}
-                <View style={styles.overlay}>
-                    {/* Top Header */}
-                    <View style={styles.header}>
-                        <Text style={styles.headerTitle}>Scan Ingredients</Text>
-                        <Text style={styles.headerSubtitle}>Position the label within the frame</Text>
+                {/* Ambient vignette overlay */}
+                <View style={StyleSheet.absoluteFill}>
+                    <View style={{ flex: 1, backgroundColor: 'rgba(10, 16, 13, 0.4)' }} />
+                </View>
+
+                {/* Top Control Bar */}
+                <View style={styles.topBar}>
+                    <TouchableOpacity
+                        style={styles.circleBtn}
+                        onPress={() => navigation.goBack()}
+                        activeOpacity={0.7}
+                    >
+                        <Icon name="close" size={20} color="#FFFFFF" />
+                    </TouchableOpacity>
+
+                    <View style={{ alignItems: 'center' }}>
+                        <SmallText size={2.5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} color="rgba(255,255,255,0.6)" textStyles={{ letterSpacing: 1 }}>
+                            PHOTO {slotIndex + 1} OF 3
+                        </SmallText>
+                        <MediumText size={3.8} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} color="#FFFFFF">
+                            {slot.label}
+                        </MediumText>
                     </View>
 
-                    {/* Scanning Frame */}
+                    <TouchableOpacity
+                        style={[
+                            styles.circleBtn,
+                            { backgroundColor: flashMode === 'on' ? '#FFFFFF' : 'rgba(255,255,255,0.1)' }
+                        ]}
+                        onPress={() => setFlashMode(prev => prev === 'on' ? 'off' : 'on')}
+                        activeOpacity={0.7}
+                    >
+                        <Icon 
+                            name={flashMode === 'on' ? 'flash' : 'flash-outline'} 
+                            size={18} 
+                            color={flashMode === 'on' ? Theme.color.COLOR_INK : '#FFFFFF'} 
+                        />
+                    </TouchableOpacity>
+                </View>
+
+                {/* Viewfinder brackets in center */}
+                <View style={styles.viewfinderContainer}>
                     <View style={styles.scanFrame}>
+                        {/* Brackets */}
                         <View style={[styles.corner, styles.topLeft]} />
                         <View style={[styles.corner, styles.topRight]} />
                         <View style={[styles.corner, styles.bottomLeft]} />
                         <View style={[styles.corner, styles.bottomRight]} />
-                        <View style={styles.scanLine} />
                     </View>
 
-                    {/* Capture Button */}
-                    <View style={styles.captureButtonContainer}>
-                        <TouchableOpacity
-                            style={[styles.captureButton, isProcessing && styles.captureButtonDisabled]}
-                            onPress={captureAndProcessImage}
-                            disabled={isProcessing}
-                            activeOpacity={0.8}
-                        >
-                            <View style={styles.captureButtonInner}>
-                                {isProcessing ? (
-                                    <ActivityIndicator size="small" color="white" />
-                                ) : (
-                                    <View style={styles.captureIcon} />
-                                )}
-                            </View>
-                        </TouchableOpacity>
-                        {!isProcessing && (
-                            <Text style={styles.captureHint}>Tap to capture</Text>
-                        )}
+                    {/* Helper Tip Banners */}
+                    <View style={styles.tipWrapper}>
+                        <View style={styles.tipContainer}>
+                            <Icon name="information-circle" size={14} color={Theme.color.COLOR_PRIMARY_GREEN} style={{ marginRight: 6 }} />
+                            <SmallText size={3} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM} color="#FFFFFF">
+                                {slot.hint}
+                            </SmallText>
+                        </View>
                     </View>
+                </View>
+
+                {/* Progress Indicators */}
+                <View style={styles.dotsContainer}>
+                    {PHOTO_SLOTS.map((s, idx) => (
+                        <View
+                            key={s.k}
+                            style={[
+                                styles.dot,
+                                {
+                                    width: idx === slotIndex ? 24 : 8,
+                                    backgroundColor: idx === slotIndex ? '#FFFFFF' : 'rgba(255,255,255,0.3)'
+                                }
+                            ]}
+                        />
+                    ))}
+                </View>
+
+                {/* Bottom Capture Panel */}
+                <View style={styles.bottomBar}>
+                    {/* Gallery Button */}
+                    <TouchableOpacity
+                        style={styles.squareBtn}
+                        onPress={handleSelectFromGallery}
+                        activeOpacity={0.7}
+                    >
+                        <Icon name="images-outline" size={20} color="#FFFFFF" />
+                    </TouchableOpacity>
+
+                    {/* Shutter Button */}
+                    <TouchableOpacity
+                        style={styles.shutterOuter}
+                        onPress={capturePhoto}
+                        disabled={isProcessing}
+                        activeOpacity={0.8}
+                    >
+                        <View style={[
+                            styles.shutterInner,
+                            {
+                                width: isShutterPressed ? 56 : 68,
+                                height: isShutterPressed ? 56 : 68,
+                                borderRadius: isShutterPressed ? 28 : 34
+                            }
+                        ]}>
+                            {isProcessing && <ActivityIndicator size="small" color={Theme.color.COLOR_PRIMARY_GREEN} />}
+                        </View>
+                    </TouchableOpacity>
+
+                    {/* Skip / Cancel Button */}
+                    <TouchableOpacity
+                        style={styles.squareBtn}
+                        onPress={handleSkip}
+                        activeOpacity={0.7}
+                    >
+                        <SmallText size={3.2} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} color="#FFFFFF">
+                            Skip
+                        </SmallText>
+                    </TouchableOpacity>
                 </View>
             </View>
         </SafeAreaView>
@@ -211,166 +308,171 @@ function Scan() {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: 'black',
+    bottomBar: {
+        alignItems: 'center',
+        bottom: height(4),
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        left: 0,
+        paddingHorizontal: width(7.4),
+        position: 'absolute',
+        right: 0,
+        zIndex: 10,
+    },
+    bottomLeft: {
+        borderBottomLeftRadius: 12,
+        borderRightWidth: 0,
+        borderTopWidth: 0,
+        bottom: 0,
+        left: 0,
+    },
+    bottomRight: {
+        borderBottomRightRadius: 12,
+        borderLeftWidth: 0,
+        borderTopWidth: 0,
+        bottom: 0,
+        right: 0,
     },
     cameraContainer: {
         flex: 1,
-    },
-    overlay: {
-        ...StyleSheet.absoluteFillObject,
-        justifyContent: 'space-between',
-    },
-    header: {
-        paddingTop: height(2.5),
-        paddingHorizontal: width(5.3),
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        paddingBottom: height(2.5),
-    },
-    headerTitle: {
-        color: 'white',
-        fontSize: width(6.4),
-        fontWeight: 'bold',
-        marginBottom: 4,
-    },
-    headerSubtitle: {
-        color: 'rgba(255, 255, 255, 0.8)',
-        fontSize: width(3.7),
-    },
-    scanFrame: {
-        width: width(85),
-        aspectRatio: 1,
-        alignSelf: 'center',
         position: 'relative',
-        marginVertical: height(2.5),
+    },
+    circleBtn: {
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderColor: 'rgba(255,255,255,0.18)',
+        borderRadius: 20,
+        borderWidth: 1,
+        height: 40,
+        justifyContent: 'center',
+        width: 40,
+    },
+    container: {
+        backgroundColor: '#0A100D',
+        flex: 1,
     },
     corner: {
+        borderColor: '#FFFFFF',
+        borderWidth: 3,
+        height: 32,
         position: 'absolute',
-        width: width(10.6),
-        height: width(10.6),
-        borderColor: Theme.color.COLOR_BLUE,
-        borderWidth: 4,
+        width: 32,
     },
-    topLeft: {
-        top: 0,
+    dot: {
+        borderRadius: 4,
+        height: 8,
+        marginHorizontal: 3,
+    },
+    dotsContainer: {
+        alignItems: 'center',
+        bottom: height(21),
+        flexDirection: 'row',
+        justifyContent: 'center',
         left: 0,
-        borderRightWidth: 0,
-        borderBottomWidth: 0,
-        borderTopLeftRadius: 12,
-    },
-    topRight: {
-        top: 0,
-        right: 0,
-        borderLeftWidth: 0,
-        borderBottomWidth: 0,
-        borderTopRightRadius: 12,
-    },
-    bottomLeft: {
-        bottom: 0,
-        left: 0,
-        borderRightWidth: 0,
-        borderTopWidth: 0,
-        borderBottomLeftRadius: 12,
-    },
-    bottomRight: {
-        bottom: 0,
-        right: 0,
-        borderLeftWidth: 0,
-        borderTopWidth: 0,
-        borderBottomRightRadius: 12,
-    },
-    scanLine: {
         position: 'absolute',
-        top: '50%',
-        left: 0,
         right: 0,
-        height: 2,
-        backgroundColor: Theme.color.COLOR_BLUE,
-        opacity: 0.6,
-    },
-    captureButtonContainer: {
-        alignItems: 'center',
-        paddingBottom: height(5),
-    },
-    captureButton: {
-        width: width(21.3),
-        height: width(21.3),
-        borderRadius: width(10.65),
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 4,
-        borderColor: 'white',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 8,
-    },
-    captureButtonDisabled: {
-        opacity: 0.6,
-    },
-    captureButtonInner: {
-        width: width(17),
-        height: width(17),
-        borderRadius: width(8.5),
-        backgroundColor: Theme.color.COLOR_BLUE,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    captureIcon: {
-        width: width(13.3),
-        height: width(13.3),
-        borderRadius: width(6.65),
-        backgroundColor: 'white',
-    },
-    captureHint: {
-        color: 'white',
-        fontSize: width(3.7),
-        marginTop: height(1.5),
-        fontWeight: '500',
+        zIndex: 10,
     },
     errorContainer: {
+        alignItems: 'center',
+        backgroundColor: '#FFFFFF',
         flex: 1,
         justifyContent: 'center',
-        alignItems: 'center',
         paddingHorizontal: width(10.6),
-        backgroundColor: Theme.color.COLOR_WHITE,
-    },
-    errorTitle: {
-        fontSize: width(5.8),
-        fontWeight: 'bold',
-        color: Theme.color.COLOR_TEXT,
-        marginTop: height(2.5),
-        marginBottom: height(1.2),
-        textAlign: 'center',
-    },
-    errorText: {
-        fontSize: width(4.2),
-        color: Theme.color.COLOT_SUBTEXT,
-        textAlign: 'center',
-        marginBottom: height(3.7),
-        lineHeight: 24,
     },
     permissionButton: {
-        backgroundColor: Theme.color.COLOR_BLUE,
-        paddingVertical: height(1.7),
-        paddingHorizontal: width(8.5),
+        backgroundColor: Theme.color.COLOR_PRIMARY_GREEN,
         borderRadius: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-        elevation: 3,
+        paddingHorizontal: 34,
+        paddingVertical: 14,
     },
-    permissionButtonText: {
-        color: Theme.color.COLOR_WHITE,
-        fontSize: width(4.2),
-        fontWeight: 'bold',
+    scanFrame: {
+        height: '100%',
+        position: 'relative',
+        width: '100%',
+    },
+    shutterInner: {
+        alignItems: 'center',
+        backgroundColor: '#FFFFFF',
+        elevation: 8,
+        justifyContent: 'center',
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.4,
+        shadowRadius: 16,
+    },
+    shutterOuter: {
+        alignItems: 'center',
+        borderColor: '#FFFFFF',
+        borderRadius: 42,
+        borderWidth: 3,
+        height: 84,
+        justifyContent: 'center',
+        width: 84,
+    },
+    squareBtn: {
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderColor: 'rgba(255,255,255,0.18)',
+        borderRadius: 14,
+        borderWidth: 1,
+        height: 52,
+        justifyContent: 'center',
+        width: 52,
+    },
+    tipContainer: {
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        borderColor: 'rgba(255,255,255,0.12)',
+        borderRadius: 20,
+        borderWidth: 1,
+        flexDirection: 'row',
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+    },
+    tipWrapper: {
+        alignItems: 'center',
+        bottom: -height(7),
+        left: 0,
+        position: 'absolute',
+        right: 0,
+    },
+    topBar: {
+        alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        left: 0,
+        paddingHorizontal: width(5.3),
+        position: 'absolute',
+        right: 0,
+        top: Platform.OS === 'ios' ? height(2) : height(4),
+        zIndex: 10,
+    },
+    topLeft: {
+        borderBottomWidth: 0,
+        borderRightWidth: 0,
+        borderTopLeftRadius: 12,
+        left: 0,
+        top: 0,
+    },
+    topRight: {
+        borderBottomWidth: 0,
+        borderLeftWidth: 0,
+        borderTopRightRadius: 12,
+        right: 0,
+        top: 0,
+    },
+    viewfinderContainer: {
+        alignItems: 'center',
+        height: height(38),
+        justifyContent: 'center',
+        left: '50%',
+        position: 'absolute',
+        top: '50%',
+        transform: [{ translateX: -width(38.5) }, { translateY: -height(25) }],
+        width: width(77),
+        zIndex: 5,
     },
 });
 
 export default Scan;
-

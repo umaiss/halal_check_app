@@ -1,21 +1,29 @@
-import { StyleSheet, View, FlatList, TouchableOpacity, Image, Alert, RefreshControl, ActivityIndicator } from 'react-native';
 import React, { useState, useEffect } from 'react';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { StyleSheet, View, FlatList, TouchableOpacity, Image, Alert, RefreshControl, ActivityIndicator, TextInput, Platform, ScrollView } from 'react-native';
+import { useNavigation, useFocusEffect, CompositeNavigationProp } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { ScanHistoryItem } from '../../redux/slices/scanHistory/types';
 import { SmallText } from '../../components/text';
 import Theme from '../../theme/theme';
-import Icon from 'react-native-vector-icons/Ionicons';
-import { RootStackParamList } from '../../navigation/types/RootParamList';
+import { RootStackParamList, BottomTabParamList } from '../../navigation/types/RootParamList';
 import { useGetHistoryQuery } from '../../redux/scanApi/scanApi';
 import { height, width } from '../../utils/dimensions';
 
-type HistoryNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type HistoryNavigationProp = CompositeNavigationProp<
+    BottomTabNavigationProp<BottomTabParamList, 'History'>,
+    NativeStackNavigationProp<RootStackParamList>
+>;
 
-const History = () => {
+function History() {
     const navigation = useNavigation<HistoryNavigationProp>();
+    
+    // States
     const [scanHistory, setScanHistory] = useState<ScanHistoryItem[]>([]);
     const [refreshing, setRefreshing] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'halal' | 'doubtful' | 'haram'>('all');
 
     // API hook for history
     const { data: apiHistory, isLoading: isApiLoading, error: apiError, refetch } = useGetHistoryQuery();
@@ -54,14 +62,16 @@ const History = () => {
     const getStatusColor = (status: string) => {
         switch (status?.toLowerCase()) {
             case 'halal':
-                return '#22C55E';
+                return Theme.color.COLOR_HALAL;
             case 'haram':
-                return '#EF4444';
+                return Theme.color.COLOR_HARAM;
             case 'doubtful':
+            case 'doubt':
             case 'musbooh':
-                return '#F59E0B';
+            case 'mushbooh':
+                return Theme.color.COLOR_DOUBTFUL;
             default:
-                return Theme.color.COLOT_SUBTEXT;
+                return Theme.color.COLOR_MUTED;
         }
     };
 
@@ -69,14 +79,16 @@ const History = () => {
     const getStatusBgColor = (status: string) => {
         switch (status?.toLowerCase()) {
             case 'halal':
-                return '#DCFCE7';
+                return Theme.color.COLOR_HALAL_BG;
             case 'haram':
-                return '#FEE2E2';
+                return Theme.color.COLOR_HARAM_BG;
             case 'doubtful':
+            case 'doubt':
             case 'musbooh':
-                return '#FEF3C7';
+            case 'mushbooh':
+                return Theme.color.COLOR_DOUBTFUL_BG;
             default:
-                return '#F5F5F5';
+                return Theme.color.COLOR_BG;
         }
     };
 
@@ -88,7 +100,9 @@ const History = () => {
             case 'haram':
                 return 'close-circle';
             case 'doubtful':
+            case 'doubt':
             case 'musbooh':
+            case 'mushbooh':
                 return 'alert-circle';
             default:
                 return 'help-circle';
@@ -123,8 +137,9 @@ const History = () => {
                     text: 'Delete',
                     style: 'destructive',
                     onPress: async () => {
-                        // TODO: Implement API deletion
+                        // API deletion placeholder (since no delete mutation exists in scanApi, we just show alert)
                         console.log('Delete item:', id);
+                        Alert.alert('Info', 'Backend deletion is not implemented yet.');
                     },
                 },
             ]
@@ -142,8 +157,9 @@ const History = () => {
                     text: 'Clear All',
                     style: 'destructive',
                     onPress: async () => {
-                        // TODO: Implement API clear all
+                        // API clear all placeholder
                         console.log('Clear all history');
+                        Alert.alert('Info', 'Backend history clearing is not implemented yet.');
                     },
                 },
             ]
@@ -161,31 +177,55 @@ const History = () => {
     const handleItemPress = (item: ScanHistoryItem) => {
         navigation.navigate('IngredientsResult', {
             ingredients: item.ingredients,
-            ingredients_hash: '', // Optional/Not provided by history API yet
+            ingredients_hash: '', 
             imageUri: item.imageUri || '',
             frontImage: item.frontImage,
             backImage: item.backImage,
             ingredientsImage: item.ingredientsImage,
-            halalCheckResult: item.halalCheckResult, // Pass pre-loaded result
+            productName: item.productName || '',
+            halalCheckResult: item.halalCheckResult, 
         });
     };
+
+    // Filtered scans based on search text and category filter
+    const filteredHistory = scanHistory.filter((item) => {
+        const matchesSearch = 
+            searchQuery.trim() === '' ||
+            (item.productName && item.productName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (item.ingredients && item.ingredients.toLowerCase().includes(searchQuery.toLowerCase()));
+
+        const itemStatus = item.halalCheckResult?.overall_status?.toLowerCase();
+        let matchesStatus = true;
+        if (statusFilter === 'halal') {
+            matchesStatus = itemStatus === 'halal';
+        } else if (statusFilter === 'haram') {
+            matchesStatus = itemStatus === 'haram';
+        } else if (statusFilter === 'doubtful') {
+            matchesStatus = itemStatus === 'doubtful' || itemStatus === 'musbooh' || itemStatus === 'mushbooh' || itemStatus === 'doubt';
+        }
+
+        return matchesSearch && matchesStatus;
+    });
 
     // Render history item
     const renderHistoryItem = ({ item }: { item: ScanHistoryItem }) => {
         const status = item.halalCheckResult?.overall_status || 'unknown';
         const rawIngredients = item.ingredients || '';
-        const ingredientsPreview = rawIngredients.length > 80
-            ? rawIngredients.substring(0, 80) + '...'
+        const ingredientsPreview = rawIngredients.length > 70
+            ? `${rawIngredients.substring(0, 70)  }...`
             : rawIngredients;
+
+        const statusColor = getStatusColor(status);
+        const statusBg = getStatusBgColor(status);
 
         return (
             <TouchableOpacity
-                style={styles.historyCard}
+                style={[styles.historyCard, Theme.shadows.sh_card, { borderLeftColor: statusColor }]}
                 onPress={() => handleItemPress(item)}
                 activeOpacity={0.7}
             >
                 <View style={styles.cardContent}>
-                    {/* Image or Icon */}
+                    {/* Thumbnail */}
                     <View style={styles.imageContainer}>
                         {item.frontImage ? (
                             <Image
@@ -195,7 +235,7 @@ const History = () => {
                             />
                         ) : (
                             <View style={styles.placeholderIcon}>
-                                <Icon name="text" size={28} color={Theme.color.COLOR_BLUE} />
+                                <Icon name="barcode-outline" size={24} color={Theme.color.COLOR_PRIMARY_GREEN} />
                             </View>
                         )}
                     </View>
@@ -205,51 +245,49 @@ const History = () => {
                         {/* Status Badge */}
                         <View style={[
                             styles.statusBadge,
-                            { backgroundColor: getStatusBgColor(status) }
+                            { backgroundColor: statusBg }
                         ]}>
                             <Icon
                                 name={getStatusIcon(status)}
-                                size={14}
-                                color={getStatusColor(status)}
+                                size={12}
+                                color={statusColor}
                             />
                             <SmallText
-                                size={2.5}
+                                size={2.4}
                                 fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}
-                                color={getStatusColor(status)}
-                                textStyles={styles.statusText}
+                                textStyles={{ color: statusColor, letterSpacing: 0.4 }}
                             >
                                 {status.toUpperCase()}
                             </SmallText>
                         </View>
 
                         {/* Product Name */}
-                        {item.productName ? (
-                            <SmallText
-                                size={4}
-                                fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}
-                                color={Theme.color.COLOR_TEXT}
-                                textStyles={styles.productNameText}
-                                textProps={{ numberOfLines: 1 }}
-                            >
-                                {item.productName}
-                            </SmallText>
-                        ) : null}
+                        <SmallText
+                            size={3.8}
+                            fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}
+                            color={Theme.color.COLOR_INK}
+                            textStyles={styles.productNameText}
+                            textProps={{ numberOfLines: 1 }}
+                        >
+                            {item.productName || 'Unnamed Scan'}
+                        </SmallText>
 
                         {/* Ingredients Preview */}
                         <SmallText
-                            size={3.2}
-                            color={Theme.color.COLOR_TEXT}
+                            size={3}
+                            color={Theme.color.COLOR_MUTED}
                             textStyles={styles.ingredientsText}
+                            textProps={{ numberOfLines: 2 }}
                         >
-                            {ingredientsPreview}
+                            {ingredientsPreview || 'No ingredients text detected'}
                         </SmallText>
 
                         {/* Timestamp */}
                         <View style={styles.timestampContainer}>
-                            <Icon name="time-outline" size={14} color={Theme.color.COLOT_SUBTEXT} />
+                            <Icon name="time-outline" size={13} color={Theme.color.COLOR_MUTED_2} />
                             <SmallText
-                                size={2.5}
-                                color={Theme.color.COLOT_SUBTEXT}
+                                size={2.6}
+                                color={Theme.color.COLOR_MUTED_2}
                                 textStyles={styles.timestampText}
                             >
                                 {formatTimestamp(item.timestamp)}
@@ -263,7 +301,7 @@ const History = () => {
                         onPress={() => handleDeleteItem(item.id)}
                         activeOpacity={0.7}
                     >
-                        <Icon name="trash-outline" size={20} color={Theme.color.COLOR_RED} />
+                        <Icon name="trash-outline" size={18} color={Theme.color.COLOR_HARAM} />
                     </TouchableOpacity>
                 </View>
             </TouchableOpacity>
@@ -274,37 +312,41 @@ const History = () => {
     const renderEmptyState = () => (
         <View style={styles.emptyContainer}>
             <View style={styles.emptyIconContainer}>
-                <Icon name="scan-outline" size={80} color={Theme.color.COLOT_SUBTEXT} />
+                <Icon name="scan-outline" size={64} color={Theme.color.COLOR_MUTED_2} />
             </View>
             <SmallText
-                size={5}
+                size={4.5}
                 fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}
-                color={Theme.color.COLOR_TEXT}
+                color={Theme.color.COLOR_INK}
                 textStyles={styles.emptyTitle}
             >
-                No Scan History
+                No Matching Scans
             </SmallText>
             <SmallText
-                size={3.5}
-                color={Theme.color.COLOT_SUBTEXT}
+                size={3.2}
+                color={Theme.color.COLOR_MUTED}
                 textStyles={styles.emptySubtitle}
             >
-                Your scanned ingredients will appear here
+                {searchQuery || statusFilter !== 'all' 
+                    ? "Try adjusting your search query or status filter."
+                    : "Products you verify will be saved here."}
             </SmallText>
-            <TouchableOpacity
-                style={styles.emptyButton}
-                onPress={() => navigation.goBack()}
-                activeOpacity={0.8}
-            >
-                <Icon name="camera" size={20} color={Theme.color.COLOR_WHITE} style={styles.emptyButtonIcon} />
-                <SmallText
-                    size={3.5}
-                    fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}
-                    color={Theme.color.COLOR_WHITE}
+            {(!searchQuery && statusFilter === 'all') && (
+                <TouchableOpacity
+                    style={[styles.emptyButton, Theme.shadows.sh_button]}
+                    onPress={() => navigation.navigate('Home', {})}
+                    activeOpacity={0.8}
                 >
-                    Start Scanning
-                </SmallText>
-            </TouchableOpacity>
+                    <Icon name="scan" size={18} color={Theme.color.COLOR_WHITE} />
+                    <SmallText
+                        size={3.4}
+                        fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}
+                        color={Theme.color.COLOR_WHITE}
+                    >
+                        Verify Product Now
+                    </SmallText>
+                </TouchableOpacity>
+            )}
         </View>
     );
 
@@ -313,32 +355,30 @@ const History = () => {
             {/* Header */}
             <View style={styles.header}>
                 <View style={styles.headerLeft}>
-                    <Icon name="time" size={28} color={Theme.color.COLOR_BLUE} />
+                    <Icon name="time" size={26} color={Theme.color.COLOR_PRIMARY_GREEN} />
                     <SmallText
-                        size={6}
+                        size={5.5}
                         fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}
-                        color={Theme.color.COLOR_TEXT}
-                        textStyles={styles.headerTitle}
+                        color={Theme.color.COLOR_INK}
                     >
                         Scan History
                     </SmallText>
                 </View>
-                {(scanHistory.length > 0 || isApiLoading) && (
+                {scanHistory.length > 0 && (
                     <TouchableOpacity
                         style={styles.clearAllButton}
                         onPress={handleClearAll}
                         activeOpacity={0.7}
                     >
                         {isApiLoading ? (
-                            <ActivityIndicator size="small" color={Theme.color.COLOR_BLUE} />
+                            <ActivityIndicator size="small" color={Theme.color.COLOR_PRIMARY_GREEN} />
                         ) : (
                             <>
-                                <Icon name="trash" size={18} color={Theme.color.COLOR_RED} />
+                                <Icon name="trash-outline" size={16} color={Theme.color.COLOR_HARAM} />
                                 <SmallText
-                                    size={3}
+                                    size={3.2}
                                     fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}
-                                    color={Theme.color.COLOR_RED}
-                                    textStyles={styles.clearAllText}
+                                    color={Theme.color.COLOR_HARAM}
                                 >
                                     Clear All
                                 </SmallText>
@@ -348,199 +388,345 @@ const History = () => {
                 )}
             </View>
 
-            {/* Scan Count */}
-            {scanHistory.length > 0 && (
-                <View style={styles.countContainer}>
-                    <SmallText
-                        size={3.2}
-                        color={Theme.color.COLOT_SUBTEXT}
-                    >
-                        {scanHistory.length} scan{scanHistory.length !== 1 ? 's' : ''} in history
-                    </SmallText>
-                </View>
-            )}
-
-            {/* History List */}
-            <FlatList
-                data={scanHistory}
-                renderItem={renderHistoryItem}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={[
-                    styles.listContent,
-                    scanHistory.length === 0 && styles.listContentEmpty
-                ]}
-                ListEmptyComponent={renderEmptyState}
-                showsVerticalScrollIndicator={false}
-                refreshControl={
-                    <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={onRefresh}
-                        tintColor={Theme.color.COLOR_BLUE}
+            {/* Modern Search Box */}
+            <View style={styles.searchWrapper}>
+                <View style={styles.searchBarContainer}>
+                    <Icon name="search-outline" size={20} color={Theme.color.COLOR_MUTED_2} style={styles.searchIcon} />
+                    <TextInput
+                        placeholder="Search by product or ingredient..."
+                        placeholderTextColor={Theme.color.COLOR_MUTED_2}
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        style={styles.searchInput}
+                        clearButtonMode="while-editing"
                     />
-                }
-            />
+                    {searchQuery.length > 0 && (
+                        <TouchableOpacity onPress={() => setSearchQuery('')}>
+                            <Icon name="close-circle" size={18} color={Theme.color.COLOR_MUTED_2} />
+                        </TouchableOpacity>
+                    )}
+                </View>
+            </View>
+
+            {/* Category Filter Pills */}
+            <View style={styles.filterWrapper}>
+                <ScrollView 
+                    horizontal 
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.filterScrollViewContent}
+                >
+                    <TouchableOpacity
+                        style={[
+                            styles.filterPill,
+                            statusFilter === 'all' ? styles.filterPillActive : styles.filterPillInactive
+                        ]}
+                        onPress={() => setStatusFilter('all')}
+                        activeOpacity={0.7}
+                    >
+                        <SmallText 
+                            size={3} 
+                            fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} 
+                            textStyles={{ color: statusFilter === 'all' ? Theme.color.COLOR_WHITE : Theme.color.COLOR_MUTED }}
+                        >
+                            All
+                        </SmallText>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[
+                            styles.filterPill,
+                            statusFilter === 'halal' ? styles.filterPillActiveHalal : styles.filterPillInactive
+                        ]}
+                        onPress={() => setStatusFilter('halal')}
+                        activeOpacity={0.7}
+                    >
+                        <View style={[styles.dotFilter, { backgroundColor: Theme.color.COLOR_HALAL }]} />
+                        <SmallText 
+                            size={3} 
+                            fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} 
+                            textStyles={{ color: statusFilter === 'halal' ? Theme.color.COLOR_WHITE : Theme.color.COLOR_HALAL }}
+                        >
+                            Halal
+                        </SmallText>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[
+                            styles.filterPill,
+                            statusFilter === 'doubtful' ? styles.filterPillActiveDoubtful : styles.filterPillInactive
+                        ]}
+                        onPress={() => setStatusFilter('doubtful')}
+                        activeOpacity={0.7}
+                    >
+                        <View style={[styles.dotFilter, { backgroundColor: Theme.color.COLOR_DOUBTFUL }]} />
+                        <SmallText 
+                            size={3} 
+                            fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} 
+                            textStyles={{ color: statusFilter === 'doubtful' ? Theme.color.COLOR_WHITE : Theme.color.COLOR_DOUBTFUL }}
+                        >
+                            Doubtful
+                        </SmallText>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[
+                            styles.filterPill,
+                            statusFilter === 'haram' ? styles.filterPillActiveHaram : styles.filterPillInactive
+                        ]}
+                        onPress={() => setStatusFilter('haram')}
+                        activeOpacity={0.7}
+                    >
+                        <View style={[styles.dotFilter, { backgroundColor: Theme.color.COLOR_HARAM }]} />
+                        <SmallText 
+                            size={3} 
+                            fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} 
+                            textStyles={{ color: statusFilter === 'haram' ? Theme.color.COLOR_WHITE : Theme.color.COLOR_HARAM }}
+                        >
+                            Haram
+                        </SmallText>
+                    </TouchableOpacity>
+                </ScrollView>
+            </View>
+
+            {/* List */}
+            {isApiLoading && scanHistory.length === 0 ? (
+                <View style={styles.loadingWrapper}>
+                    <ActivityIndicator size="large" color={Theme.color.COLOR_PRIMARY_GREEN} />
+                </View>
+            ) : (
+                <FlatList
+                    data={filteredHistory}
+                    renderItem={renderHistoryItem}
+                    keyExtractor={(item) => item.id}
+                    contentContainerStyle={[
+                        styles.listContent,
+                        filteredHistory.length === 0 && styles.listContentEmpty
+                    ]}
+                    ListEmptyComponent={renderEmptyState}
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={onRefresh}
+                            tintColor={Theme.color.COLOR_PRIMARY_GREEN}
+                        />
+                    }
+                />
+            )}
         </View>
     );
-};
+}
 
 export default History;
 
 const styles = StyleSheet.create({
-    container: {
+    cardContent: {
+        alignItems: 'center',
+        flexDirection: 'row',
+        padding: 14,
+    },
+    cardDetails: {
         flex: 1,
-        backgroundColor: Theme.color.COLOR_WHITE,
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingTop: height(7.4),
-        paddingHorizontal: width(6.4),
-        paddingBottom: height(2),
-        backgroundColor: Theme.color.COLOR_WHITE,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
-    },
-    headerLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-    },
-    headerTitle: {
-        marginLeft: 4,
     },
     clearAllButton: {
-        flexDirection: 'row',
         alignItems: 'center',
+        backgroundColor: Theme.color.COLOR_HARAM_BG,
+        borderRadius: 10,
+        flexDirection: 'row',
+        gap: 4,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+    },
+    container: {
+        backgroundColor: Theme.color.COLOR_BG,
+        flex: 1,
+    },
+    deleteButton: {
+        marginLeft: 4,
+        padding: 8,
+    },
+    dotFilter: {
+        borderRadius: 3,
+        height: 6,
+        width: 6,
+    },
+    emptyButton: {
+        alignItems: 'center',
+        backgroundColor: Theme.color.COLOR_PRIMARY_GREEN,
+        borderRadius: 16,
+        flexDirection: 'row',
         gap: 6,
-        paddingVertical: height(1),
-        paddingHorizontal: width(3.2),
-        borderRadius: 8,
-        backgroundColor: '#FEE2E2',
+        paddingHorizontal: width(6.5),
+        paddingVertical: height(1.6),
     },
-    clearAllText: {
-        marginLeft: 2,
+    emptyContainer: {
+        alignItems: 'center',
+        flex: 1,
+        justifyContent: 'center',
+        paddingHorizontal: width(10),
     },
-    countContainer: {
-        paddingHorizontal: width(10.6),
-        paddingVertical: height(1.5),
+    emptyIconContainer: {
+        alignItems: 'center',
+        backgroundColor: Theme.color.COLOR_WHITE,
+        borderColor: Theme.color.COLOR_BORDER,
+        borderRadius: width(14),
+        borderWidth: 1,
+        height: width(28),
+        justifyContent: 'center',
+        marginBottom: height(2),
+        width: width(28),
+    },
+    emptySubtitle: {
+        lineHeight: 18,
+        marginBottom: height(3),
+        textAlign: 'center',
+    },
+    emptyTitle: {
+        marginBottom: height(0.6),
+        textAlign: 'center',
+    },
+    filterPill: {
+        alignItems: 'center',
+        borderRadius: 12,
+        borderWidth: 1,
+        flexDirection: 'row',
+        gap: 6,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+    },
+    filterPillActive: {
+        backgroundColor: Theme.color.COLOR_PRIMARY_GREEN,
+        borderColor: Theme.color.COLOR_PRIMARY_GREEN,
+    },
+    filterPillActiveDoubtful: {
+        backgroundColor: Theme.color.COLOR_DOUBTFUL,
+        borderColor: Theme.color.COLOR_DOUBTFUL,
+    },
+    filterPillActiveHalal: {
+        backgroundColor: Theme.color.COLOR_HALAL,
+        borderColor: Theme.color.COLOR_HALAL,
+    },
+    filterPillActiveHaram: {
+        backgroundColor: Theme.color.COLOR_HARAM,
+        borderColor: Theme.color.COLOR_HARAM,
+    },
+    filterPillInactive: {
+        backgroundColor: Theme.color.COLOR_BG,
+        borderColor: Theme.color.COLOR_BORDER,
+    },
+    filterScrollViewContent: {
+        gap: width(2.5),
+        paddingHorizontal: width(5),
+    },
+    filterWrapper: {
+        backgroundColor: Theme.color.COLOR_WHITE,
+        borderBottomColor: Theme.color.COLOR_BORDER,
+        borderBottomWidth: 1,
+        paddingBottom: height(1.5),
+    },
+    header: {
+        alignItems: 'center',
+        backgroundColor: Theme.color.COLOR_WHITE,
+        borderBottomColor: Theme.color.COLOR_BORDER,
+        borderBottomWidth: 1,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingBottom: height(1.5),
+        paddingHorizontal: width(5),
+        paddingTop: Platform.OS === 'ios' ? height(6) : height(2.5),
+    },
+    headerLeft: {
+        alignItems: 'center',
+        flexDirection: 'row',
+        gap: 8,
+    },
+    historyCard: {
+        backgroundColor: Theme.color.COLOR_WHITE,
+        borderColor: Theme.color.COLOR_BORDER,
+        borderLeftWidth: 4,
+        borderRadius: 20,
+        borderWidth: 1,
+        marginBottom: height(1.8),
+    },
+    imageContainer: {
+        marginRight: width(3.5),
+    },
+    ingredientsText: {
+        lineHeight: 16,
+        marginBottom: 4,
     },
     listContent: {
-        paddingHorizontal: width(6.4),
-        paddingBottom: height(3),
+        paddingBottom: 110,
+        paddingHorizontal: width(4.5),
+        paddingTop: height(2),
     },
     listContentEmpty: {
         flexGrow: 1,
     },
-    historyCard: {
-        backgroundColor: Theme.color.COLOR_WHITE,
-        borderRadius: 16,
-        marginBottom: height(2),
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-        elevation: 3,
-        borderWidth: 1,
-        borderColor: '#F0F0F0',
-    },
-    cardContent: {
-        flexDirection: 'row',
-        padding: width(4.2),
-        alignItems: 'flex-start',
-    },
-    imageContainer: {
-        marginRight: width(3.2),
-    },
-    thumbnail: {
-        width: width(18.6),
-        height: width(18.6),
-        borderRadius: 12,
-        backgroundColor: '#F5F5F5',
+    loadingWrapper: {
+        alignItems: 'center',
+        flex: 1,
+        justifyContent: 'center',
     },
     placeholderIcon: {
-        width: width(18.6),
-        height: width(18.6),
+        alignItems: 'center',
+        backgroundColor: Theme.color.COLOR_PRIMARY_GREEN_BG,
         borderRadius: 12,
-        backgroundColor: `${Theme.color.COLOR_BLUE}15`,
+        height: width(16),
         justifyContent: 'center',
-        alignItems: 'center',
-    },
-    cardDetails: {
-        flex: 1,
-        justifyContent: 'space-between',
-    },
-    statusBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        alignSelf: 'flex-start',
-        paddingHorizontal: width(2.6),
-        paddingVertical: height(0.6),
-        borderRadius: 8,
-        gap: 4,
-        marginBottom: height(1),
-    },
-    statusText: {
-        letterSpacing: 0.5,
+        width: width(16),
     },
     productNameText: {
-        marginBottom: height(0.5),
+        marginBottom: 2,
     },
-    ingredientsText: {
-        lineHeight: 20,
-        marginBottom: height(1),
+    searchBarContainer: {
+        alignItems: 'center',
+        backgroundColor: Theme.color.COLOR_BG,
+        borderColor: Theme.color.COLOR_BORDER,
+        borderRadius: 14,
+        borderWidth: 1,
+        flexDirection: 'row',
+        height: 48,
+        paddingHorizontal: 12,
+    },
+    searchIcon: {
+        marginRight: 8,
+    },
+    searchInput: {
+        color: Theme.color.COLOR_INK,
+        flex: 1,
+        fontFamily: Theme.fonts.FONT_NUNITO_REGULAR,
+        fontSize: width(3.4),
+        padding: 0, // Reset default padding
+    },
+    searchWrapper: {
+        backgroundColor: Theme.color.COLOR_WHITE,
+        paddingBottom: height(1),
+        paddingHorizontal: width(5),
+        paddingTop: height(1.5),
+    },
+    statusBadge: {
+        alignItems: 'center',
+        alignSelf: 'flex-start',
+        borderRadius: 8,
+        flexDirection: 'row',
+        gap: 3,
+        marginBottom: 4,
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+    },
+    thumbnail: {
+        backgroundColor: '#F5F5F5',
+        borderRadius: 12,
+        height: width(16),
+        width: width(16),
     },
     timestampContainer: {
-        flexDirection: 'row',
         alignItems: 'center',
+        flexDirection: 'row',
         gap: 4,
     },
     timestampText: {
-        marginLeft: 2,
-    },
-    deleteButton: {
-        padding: width(2.1),
-        marginLeft: width(2.1),
-    },
-    emptyContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingHorizontal: width(10.6),
-    },
-    emptyIconContainer: {
-        width: width(42.6),
-        height: width(42.6),
-        borderRadius: width(21.3),
-        backgroundColor: `${Theme.color.COLOT_SUBTEXT}10`,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: height(3),
-    },
-    emptyTitle: {
-        textAlign: 'center',
-        marginBottom: height(1),
-    },
-    emptySubtitle: {
-        textAlign: 'center',
-        marginBottom: height(4),
-        lineHeight: 22,
-    },
-    emptyButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Theme.color.COLOR_BLUE,
-        paddingVertical: height(1.7),
-        paddingHorizontal: width(7.4),
-        borderRadius: 12,
-        gap: 8,
-        shadowColor: Theme.color.COLOR_BLUE,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 4,
-    },
-    emptyButtonIcon: {
-        marginRight: 4,
+        letterSpacing: 0.2,
     },
 });

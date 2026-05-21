@@ -1,23 +1,24 @@
-import { supabase } from './supabase';
 import { decode } from 'base64-arraybuffer';
 import * as RNFS from 'react-native-fs';
 import { Platform } from 'react-native';
+import { supabase } from './supabase';
 
-export const uploadImageToSupabase = async (uri: string, folder: string = 'halal-images', productName?: string) => {
+export const uploadImageToSupabase = async (uri: string, folder?: string, productName?: string) => {
     try {
         const fileName = `${Date.now()}-${uri.split('/').pop()}`;
 
-        let pathFolder = folder;
+        const activeFolder = folder ?? 'halal-images';
+        let pathFolder = activeFolder;
         const cleanProductName = productName
             ? productName.toLowerCase().trim().replace(/[^a-z0-9-_]/g, '_').replace(/_+/g, '_')
             : 'unnamed_product';
 
-        if (folder === 'halal-images') {
+        if (activeFolder === 'halal-images') {
             // Organize standard scans under a dedicated scan-product-images folder
             pathFolder = `scan-product-images/${cleanProductName}`;
         } else {
             // For other folders (like 'improvement-images'), nest under it
-            pathFolder = `${folder}/${cleanProductName}`;
+            pathFolder = `${activeFolder}/${cleanProductName}`;
         }
 
         const filePath = `${pathFolder}/${fileName}`;

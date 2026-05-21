@@ -1,7 +1,16 @@
 export type RootStackParamList = {
     Onboarding: undefined;
-    MainTabs: undefined;
-    Profile: { userId: string };
+    MainTabs: {
+        screen: 'Home';
+        params?: {
+            capturedPhoto?: { slotKey: 'front' | 'back' | 'ingredients'; uri: string };
+            existingPhotos?: {
+                front?: string;
+                back?: string;
+                ingredients?: string;
+            };
+        };
+    } | undefined;
     Settings: undefined;
     IngredientsResult: {
         ingredients: string;
@@ -14,14 +23,28 @@ export type RootStackParamList = {
         halalCheckResult?: any; // Pre-loaded result from history
         chatgpt_result?: any;   // Used when we load a cached record from DB
     };
-    Scan: undefined;
+    Scan: {
+        slotKey?: 'front' | 'back' | 'ingredients';
+        existingPhotos?: {
+            front?: string;
+            back?: string;
+            ingredients?: string;
+        };
+    };
     Login: undefined;
     Signup: undefined;
     Upload: undefined;
 };
 
 export type BottomTabParamList = {
-    Home: undefined;
+    Home: {
+        capturedPhoto?: { slotKey: 'front' | 'back' | 'ingredients'; uri: string };
+        existingPhotos?: {
+            front?: string;
+            back?: string;
+            ingredients?: string;
+        };
+    };
     History: undefined;
     Profile: undefined;
 };

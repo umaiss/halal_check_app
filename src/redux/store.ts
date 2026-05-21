@@ -1,6 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
-import authReducer from "../redux/slices/auth/authSlice";
-import scanHistoryReducer from "../redux/slices/scanHistory/scanHistorySlice";
+import authReducer from "./slices/auth/authSlice";
+import scanHistoryReducer from "./slices/scanHistory/scanHistorySlice";
 import { authApi } from "./authApi/authApi";
 import { scanApi } from "./scanApi/scanApi";
 

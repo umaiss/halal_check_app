@@ -4,36 +4,25 @@ import Theme from '../../theme/theme';
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: Theme.color.COLOR_WHITE,
         marginBottom: height(2),
-        overflow: "hidden",
         width: '100%',
-
-
     },
     input: {
         backgroundColor: 'transparent',
-        color: Theme.color.COLOR_TEXT,
-        fontSize: width(4.2),
+        flex: 1,
+        fontFamily: Theme.fonts.FONT_NUNITO_REGULAR,
+        fontSize: width(4),
         height: '100%',
-        marginLeft: height(1),
-        width: '93%'
+        marginLeft: width(2),
     },
     inputContainer: {
         alignItems: "center",
-        backgroundColor: Theme.color.COLOR_WHITE,
-        borderColor: Theme.color.COLOR_STROKE,
-        borderRadius: width(100),
-        borderWidth: width(0.3),
-        color: Theme.color.COLOR_TEXT,
+        borderRadius: 14,
+        borderWidth: 1.5,
         flexDirection: "row",
         height: height(6.5),
-        justifyContent: "space-between",
-        overflow: "hidden",
-        paddingLeft: width(5),
-        paddingRight: width(2)
+        paddingHorizontal: width(4),
     },
-
 });
 
 export default styles;

@@ -2,19 +2,20 @@ import React, { useState } from 'react';
 import { View, TouchableOpacity, SafeAreaView, StatusBar, ScrollView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useDispatch } from 'react-redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from '../../navigation/types/RootParamList';
 import { Input, Button, LargeText, SmallText } from '../../components';
 import Theme from '../../theme/theme';
 import styles from './styles';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 
-import { useDispatch } from 'react-redux';
 import { setCredentials } from '../../redux/slices/auth/authSlice';
 import { useRegisterMutation } from '../../redux/authApi/authApi';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import ASYNC_KEYS from '../../utils/async-keys';
 
-const Signup = () => {
+
+function Signup() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const dispatch = useDispatch();
     const [register, { isLoading }] = useRegisterMutation();
@@ -110,90 +111,115 @@ const Signup = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor={Theme.color.BACKGROUND_COLOR} />
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
-                <View style={styles.headerContainer}>
-                    <LargeText textStyles={styles.title}>Create Account</LargeText>
-                    <SmallText textStyles={styles.subTitle} color={Theme.color.COLOT_SUBTEXT}>
-                        Join us to start scanning products!
-                    </SmallText>
-                </View>
+        <View style={styles.container}>
+            <StatusBar barStyle="light-content" backgroundColor="#074330" />
+            
+            {/* Background glowing blobs */}
+            <View style={styles.glowBlob1} />
+            <View style={styles.glowBlob2} />
 
-                <View style={styles.inputContainer}>
-                    <Input
-                        label="Full Name"
-                        placeholder="John Doe"
-                        value={name}
-                        onChangeText={(text: string) => { setName(text); if (nameError) setNameError(''); }}
-                        error={nameError}
-                        mandatory
-                    />
-                </View>
-
-                <View style={styles.inputContainer}>
-                    <Input
-                        label="Email"
-                        placeholder="Enter your email"
-                        value={email}
-                        onChangeText={(text: string) => { setEmail(text); if (emailError) setEmailError(''); }}
-                        error={emailError}
-                        keyboardType="email-address"
-                        mandatory
-                    />
-                </View>
-
-                <View style={styles.inputContainer}>
-                    <Input
-                        label="Password"
-                        placeholder="Create a password"
-                        value={password}
-                        onChangeText={(text: string) => { setPassword(text); if (passwordError) setPasswordError(''); }}
-                        error={passwordError}
-                        secureTextEntry={secureTextEntry}
-                        mandatory
-                        renderRightIcon={
-                            <TouchableOpacity onPress={() => setSecureTextEntry(!secureTextEntry)}>
-                                <Ionicons style={styles.icon} name={secureTextEntry ? "eye-off" : "eye"} size={20} color={Theme.color.COLOT_SUBTEXT} />
-                            </TouchableOpacity>
-                        }
-                    />
-                </View>
-
-                <View style={styles.inputContainer}>
-                    <Input
-                        label="Confirm Password"
-                        placeholder="Confirm your password"
-                        value={confirmPassword}
-                        onChangeText={(text: string) => { setConfirmPassword(text); if (confirmPasswordError) setConfirmPasswordError(''); }}
-                        error={confirmPasswordError}
-                        secureTextEntry={secureConfirmEntry}
-                        mandatory
-                        renderRightIcon={
-                            <TouchableOpacity onPress={() => setSecureConfirmEntry(!secureConfirmEntry)}>
-                                <Ionicons style={styles.icon} name={secureConfirmEntry ? "eye-off" : "eye"} size={20} color={Theme.color.COLOT_SUBTEXT} />
-                            </TouchableOpacity>
-                        }
-                    />
-                </View>
-
-                <View style={styles.buttonContainer}>
-                    <Button onPress={handleSignup} isLoading={isLoading}>
-                        SIGN UP
-                    </Button>
-                </View>
-
-                <View style={styles.footerContainer}>
-                    <SmallText color={Theme.color.COLOR_TEXT}>Already have an account? </SmallText>
-                    <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                        <SmallText color={Theme.color.COLOR_BLUE} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
-                            Login
+            <SafeAreaView style={{ flex: 1 }}>
+                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+                    
+                    {/* Header */}
+                    <View style={styles.headerContainer}>
+                        <LargeText textStyles={styles.title}>Create Account</LargeText>
+                        <SmallText textStyles={styles.subTitle} color="rgba(255, 255, 255, 0.65)">
+                            Join us to start scanning products!
                         </SmallText>
-                    </TouchableOpacity>
-                </View>
-            </ScrollView>
-        </SafeAreaView>
+                    </View>
+
+                    {/* Glassmorphic Form Card */}
+                    <View style={styles.glassCard}>
+                        <View style={styles.inputContainer}>
+                            <Input
+                                variant="glass"
+                                label="Full Name"
+                                placeholder="John Doe"
+                                value={name}
+                                onChangeText={(text: string) => { setName(text); if (nameError) setNameError(''); }}
+                                error={nameError}
+                                mandatory
+                            />
+                        </View>
+
+                        <View style={styles.inputContainer}>
+                            <Input
+                                variant="glass"
+                                label="Email"
+                                placeholder="Enter your email"
+                                value={email}
+                                onChangeText={(text: string) => { setEmail(text); if (emailError) setEmailError(''); }}
+                                error={emailError}
+                                keyboardType="email-address"
+                                mandatory
+                            />
+                        </View>
+
+                        <View style={styles.inputContainer}>
+                            <Input
+                                variant="glass"
+                                label="Password"
+                                placeholder="Create a password"
+                                value={password}
+                                onChangeText={(text: string) => { setPassword(text); if (passwordError) setPasswordError(''); }}
+                                error={passwordError}
+                                secureTextEntry={secureTextEntry}
+                                mandatory
+                                renderRightIcon={
+                                    <TouchableOpacity onPress={() => setSecureTextEntry(!secureTextEntry)}>
+                                        <Ionicons style={styles.icon} name={secureTextEntry ? "eye-off" : "eye"} size={20} color="rgba(255, 255, 255, 0.6)" />
+                                    </TouchableOpacity>
+                                }
+                            />
+                        </View>
+
+                        <View style={styles.inputContainer}>
+                            <Input
+                                variant="glass"
+                                label="Confirm Password"
+                                placeholder="Confirm your password"
+                                value={confirmPassword}
+                                onChangeText={(text: string) => { setConfirmPassword(text); if (confirmPasswordError) setConfirmPasswordError(''); }}
+                                error={confirmPasswordError}
+                                secureTextEntry={secureConfirmEntry}
+                                mandatory
+                                renderRightIcon={
+                                    <TouchableOpacity onPress={() => setSecureConfirmEntry(!secureConfirmEntry)}>
+                                        <Ionicons style={styles.icon} name={secureConfirmEntry ? "eye-off" : "eye"} size={20} color="rgba(255, 255, 255, 0.6)" />
+                                    </TouchableOpacity>
+                                }
+                            />
+                        </View>
+
+                        <View style={styles.buttonContainer}>
+                            <Button 
+                                onPress={handleSignup} 
+                                isLoading={isLoading}
+                                buttonTextColor={Theme.color.COLOR_PRIMARY_GREEN}
+                                containerStyle={styles.buttonStyle}
+                                ActivityIndicatorColor={Theme.color.COLOR_PRIMARY_GREEN}
+                            >
+                                SIGN UP
+                            </Button>
+                        </View>
+                    </View>
+
+                    {/* Footer Links */}
+                    <View style={styles.footerContainer}>
+                        <SmallText textStyles={styles.footerText}>Already have an account? </SmallText>
+                        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                            <SmallText textStyles={styles.footerLink}>
+                                Login
+                            </SmallText>
+                        </TouchableOpacity>
+                    </View>
+
+                </ScrollView>
+            </SafeAreaView>
+        </View>
     );
-};
+}
 
 export default Signup;
+

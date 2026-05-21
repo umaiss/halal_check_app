@@ -19,6 +19,7 @@ interface CommonTextProps {
   textProps?: TextProps;
   onPress?: () => void;
   fontFamily?: string;
+  numberOfLines?: number;
 }
 
 interface UnderlineTextProps extends CommonTextProps {
@@ -34,6 +35,7 @@ export const LargeText: React.FC<CommonTextProps> = ({
   textProps,
   onPress,
   fontFamily = Theme.fonts.FONT_NUNITO_EXTRABOLD,
+  numberOfLines,
 }) => {
   const styles = StyleSheet.create({
     text: {
@@ -46,7 +48,7 @@ export const LargeText: React.FC<CommonTextProps> = ({
 
   return (
     <Pressable disabled={!onPress} onPress={onPress}>
-      <Text style={[styles.text, textStyles]} {...textProps}>
+      <Text style={[styles.text, textStyles]} numberOfLines={numberOfLines} {...textProps}>
         {children}
       </Text>
     </Pressable>
@@ -62,6 +64,7 @@ export const MediumText: React.FC<CommonTextProps> = ({
   textProps,
   onPress,
   fontFamily = Theme.fonts.FONT_NUNITO_MEDIUM,
+  numberOfLines,
 }) => {
   const styles = StyleSheet.create({
     text: {
@@ -74,7 +77,7 @@ export const MediumText: React.FC<CommonTextProps> = ({
 
   return (
     <Pressable disabled={!onPress} onPress={onPress}>
-      <Text style={[styles.text, textStyles]} {...textProps}>
+      <Text style={[styles.text, textStyles]} numberOfLines={numberOfLines} {...textProps}>
         {children}
       </Text>
     </Pressable>
@@ -90,6 +93,7 @@ export const SmallText: React.FC<CommonTextProps> = ({
   textProps,
   onPress,
   fontFamily = Theme.fonts.FONT_NUNITO_REGULAR,
+  numberOfLines,
 }) => {
   const styles = StyleSheet.create({
     text: {
@@ -102,7 +106,7 @@ export const SmallText: React.FC<CommonTextProps> = ({
 
   return (
     <Pressable disabled={!onPress} onPress={onPress}>
-      <Text style={[styles.text, textStyles]} {...textProps}>
+      <Text style={[styles.text, textStyles]} numberOfLines={numberOfLines} {...textProps}>
         {children}
       </Text>
     </Pressable>
@@ -119,6 +123,7 @@ export const UnderLineText: React.FC<UnderlineTextProps> = ({
   onPress,
   textDecorationLine = 'underline',
   fontFamily = Theme.fonts.FONT_NUNITO_REGULAR,
+  numberOfLines,
 }) => {
   const styles = StyleSheet.create({
     text: {
@@ -132,7 +137,7 @@ export const UnderLineText: React.FC<UnderlineTextProps> = ({
 
   return (
     <Pressable disabled={!onPress} onPress={onPress}>
-      <Text style={[styles.text, textStyles]} {...textProps}>
+      <Text style={[styles.text, textStyles]} numberOfLines={numberOfLines} {...textProps}>
         {children}
       </Text>
     </Pressable>

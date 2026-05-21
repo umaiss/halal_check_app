@@ -1,21 +1,19 @@
-
 import React, { useState } from 'react';
-import { View, TouchableOpacity, SafeAreaView, StatusBar, Alert } from 'react-native';
+import { View, TouchableOpacity, SafeAreaView, StatusBar, Alert, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useDispatch } from 'react-redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from '../../navigation/types/RootParamList';
 import { Input, Button, LargeText, SmallText } from '../../components';
 import Theme from '../../theme/theme';
 import styles from './styles';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-
-import { useDispatch } from 'react-redux';
 import { setCredentials } from '../../redux/slices/auth/authSlice';
 import { useLoginMutation } from '../../redux/authApi/authApi';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import ASYNC_KEYS from '../../utils/async-keys';
 
-const Login = () => {
+function Login() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const dispatch = useDispatch();
     const [login, { isLoading }] = useLoginMutation();
@@ -33,7 +31,7 @@ const Login = () => {
         if (!email) {
             setEmailError('Email is required');
             valid = false;
-        } else if (!/\S+@\S+\.\S/.test(email)) {
+        } else if (!/\S+@\S+\.\S+/.test(email)) {
             setEmailError('Please enter a valid email');
             valid = false;
         } else {
@@ -70,7 +68,6 @@ const Login = () => {
                         refreshToken: response.refresh_token || null,
                         user: response.user
                     }));
-                    // Navigation handled by StackNavigator
                 } else {
                     Alert.alert('Login Failed', 'Invalid response from server');
                 }
@@ -83,82 +80,107 @@ const Login = () => {
     };
 
     const handleSocialLogin = (platform: string) => {
-        Alert.alert(`${platform} Login`, `Proceed with ${platform} login logic here.`);
+        Alert.alert(`${platform} Login`, `Proceed with ${platform} login logic.`);
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor={Theme.color.BACKGROUND_COLOR} />
-            <View style={styles.headerContainer}>
-                <LargeText textStyles={styles.title}>Welcome Back!</LargeText>
-                <SmallText textStyles={styles.subTitle} color={Theme.color.COLOT_SUBTEXT}>
-                    Login to continue your Halal journey
-                </SmallText>
-            </View>
+        <View style={styles.container}>
+            <StatusBar barStyle="light-content" backgroundColor="#074330" />
+            
+            {/* Background glowing blobs */}
+            <View style={styles.glowBlob1} />
+            <View style={styles.glowBlob2} />
 
-            <View style={styles.inputContainer}>
-                <Input
-                    label="Email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChangeText={(text: string) => { setEmail(text); if (emailError) setEmailError(''); }}
-                    error={emailError}
-                    keyboardType="email-address"
-                    mandatory
-                />
-            </View>
+            <SafeAreaView style={{ flex: 1 }}>
+                <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                    
+                    {/* Header */}
+                    <View style={styles.headerContainer}>
+                        <LargeText textStyles={styles.title}>Welcome Back!</LargeText>
+                        <SmallText textStyles={styles.subTitle} color="rgba(255, 255, 255, 0.65)">
+                            Login to continue your Halal journey
+                        </SmallText>
+                    </View>
 
-            <View style={styles.inputContainer}>
-                <Input
-                    label="Password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChangeText={(text: string) => { setPassword(text); if (passwordError) setPasswordError(''); }}
-                    error={passwordError}
-                    secureTextEntry={secureTextEntry}
-                    mandatory
-                    renderRightIcon={
-                        <TouchableOpacity onPress={() => setSecureTextEntry(!secureTextEntry)}>
-                            <Ionicons style={styles.icon} name={secureTextEntry ? "eye-off" : "eye"} size={20} color={Theme.color.COLOT_SUBTEXT} />
+                    {/* Glassmorphic Form Card */}
+                    <View style={styles.glassCard}>
+                        <View style={styles.inputContainer}>
+                            <Input
+                                variant="glass"
+                                label="Email"
+                                placeholder="Enter your email"
+                                value={email}
+                                onChangeText={(text: string) => { setEmail(text); if (emailError) setEmailError(''); }}
+                                error={emailError}
+                                keyboardType="email-address"
+                                mandatory
+                            />
+                        </View>
+
+                        <View style={styles.inputContainer}>
+                            <Input
+                                variant="glass"
+                                label="Password"
+                                placeholder="Enter your password"
+                                value={password}
+                                onChangeText={(text: string) => { setPassword(text); if (passwordError) setPasswordError(''); }}
+                                error={passwordError}
+                                secureTextEntry={secureTextEntry}
+                                mandatory
+                                renderRightIcon={
+                                    <TouchableOpacity onPress={() => setSecureTextEntry(!secureTextEntry)}>
+                                        <Ionicons style={styles.icon} name={secureTextEntry ? "eye-off" : "eye"} size={20} color="rgba(255, 255, 255, 0.6)" />
+                                    </TouchableOpacity>
+                                }
+                            />
+                        </View>
+
+                        <View style={styles.forgotPasswordContainer}>
+                            <TouchableOpacity onPress={() => Alert.alert('Forgot Password', 'Reset password flow')}>
+                                <SmallText textStyles={styles.forgotPasswordText}>Forgot Password?</SmallText>
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={styles.buttonContainer}>
+                            <Button 
+                                onPress={handleLogin} 
+                                isLoading={isLoading}
+                                buttonTextColor={Theme.color.COLOR_PRIMARY_GREEN}
+                                containerStyle={styles.buttonStyle}
+                                ActivityIndicatorColor={Theme.color.COLOR_PRIMARY_GREEN}
+                            >
+                                LOGIN
+                            </Button>
+                        </View>
+
+                        <View style={styles.socialLoginContainer}>
+                            <SmallText textStyles={styles.socialDividerText} size={3.2}>Or connect with</SmallText>
+                            <View style={styles.socialButtonsRow}>
+                                <TouchableOpacity style={styles.socialButton} onPress={() => handleSocialLogin('Google')}>
+                                    <Ionicons name="logo-google" size={22} color="#FFFFFF" />
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.socialButton} onPress={() => handleSocialLogin('Apple')}>
+                                    <Ionicons name="logo-apple" size={22} color="#FFFFFF" />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+
+                    {/* Footer Links */}
+                    <View style={styles.signupContainer}>
+                        <SmallText textStyles={styles.signupText}>Don&apos;t have an account? </SmallText>
+                        <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+                            <SmallText textStyles={styles.signupLink}>
+                                Sign Up
+                            </SmallText>
                         </TouchableOpacity>
-                    }
-                />
-            </View>
+                    </View>
 
-            <View style={styles.forgotPasswordContainer}>
-                <TouchableOpacity onPress={() => Alert.alert('Forgot Password', 'Reset password flow')}>
-                    <SmallText color={Theme.color.COLOR_BLUE}>Forgot Password?</SmallText>
-                </TouchableOpacity>
-            </View>
-
-            <View style={styles.buttonContainer}>
-                <Button onPress={handleLogin} isLoading={isLoading}>
-                    LOGIN
-                </Button>
-            </View>
-
-            <View style={styles.socialLoginContainer}>
-                <SmallText color={Theme.color.COLOT_SUBTEXT}>Or login with details</SmallText>
-                <View style={styles.socialButtonsRow}>
-                    <TouchableOpacity style={styles.socialButton} onPress={() => handleSocialLogin('Google')}>
-                        <Ionicons name="logo-google" size={24} color={Theme.color.COLOR_RED} />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.socialButton} onPress={() => handleSocialLogin('Apple')}>
-                        <Ionicons name="logo-apple" size={24} color={Theme.color.BLACK} />
-                    </TouchableOpacity>
-                </View>
-            </View>
-
-            <View style={styles.signupContainer}>
-                <SmallText color={Theme.color.COLOR_TEXT}>Don't have an account? </SmallText>
-                <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-                    <SmallText color={Theme.color.COLOR_BLUE} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
-                        Sign Up
-                    </SmallText>
-                </TouchableOpacity>
-            </View>
-        </SafeAreaView>
+                </ScrollView>
+            </SafeAreaView>
+        </View>
     );
-};
+}
 
 export default Login;
+

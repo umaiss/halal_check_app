@@ -1,17 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity, Image, ActivityIndicator, SafeAreaView, Modal, TextInput, Alert, Platform } from 'react-native';
+import { StyleSheet, View, ScrollView, TouchableOpacity, Image, ActivityIndicator, SafeAreaView, Modal, Alert, Platform, Share } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import Icon from 'react-native-vector-icons/Ionicons';
+import { launchImageLibrary } from 'react-native-image-picker';
 import { RootStackParamList } from '../../navigation/types/RootParamList';
 import { SmallText } from '../../components/text';
 import Theme from '../../theme/theme';
 import { useHalalCheckMutation, useImproveCheckMutation } from '../../redux/scanApi/scanApi';
-import { HalalCheckResponse, IngredientStatus } from '../../redux/services/types';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { HalalCheckResponse } from '../../redux/services/types';
 import { scanHistoryStorage } from '../../utils/scanHistoryStorage';
 import { height, width } from '../../utils/dimensions';
-import Input from '../../components/input';
-import { launchImageLibrary } from 'react-native-image-picker';
 import { uploadImageToSupabase } from '../../utils/imageUpload';
 
 type IngredientsResultRouteProp = RouteProp<RootStackParamList, 'IngredientsResult'>;
@@ -29,6 +28,10 @@ function IngredientsResult() {
     // State for halal check results
     const [halalStatus, setHalalStatus] = useState<HalalCheckResponse | null>(null);
 
+    // Accordion / interactive states
+    const [reasonOpen, setReasonOpen] = useState(false);
+    const [expandedIngredients, setExpandedIngredients] = useState<number[]>([]);
+
     // State for improvement modal
     const [isImproveModalVisible, setIsImproveModalVisible] = useState(false);
     const [hasShownImproveModal, setHasShownImproveModal] = useState(false);
@@ -41,14 +44,16 @@ function IngredientsResult() {
     const getStatusColor = (status: string) => {
         switch (status?.toLowerCase()) {
             case 'halal':
-                return '#22C55E'; // Green
+                return Theme.color.COLOR_HALAL;
             case 'haram':
-                return '#EF4444'; // Red
+                return Theme.color.COLOR_HARAM;
             case 'doubtful':
+            case 'doubt':
             case 'musbooh':
-                return '#F59E0B'; // Yellow/Orange
+            case 'mushbooh':
+                return Theme.color.COLOR_DOUBTFUL;
             default:
-                return Theme.color.COLOT_SUBTEXT;
+                return Theme.color.COLOR_MUTED;
         }
     };
 
@@ -56,14 +61,33 @@ function IngredientsResult() {
     const getStatusBgColor = (status: string) => {
         switch (status?.toLowerCase()) {
             case 'halal':
-                return '#DCFCE7'; // Light green
+                return Theme.color.COLOR_HALAL_BG;
             case 'haram':
-                return '#FEE2E2'; // Light red
+                return Theme.color.COLOR_HARAM_BG;
             case 'doubtful':
+            case 'doubt':
             case 'musbooh':
-                return '#FEF3C7'; // Light yellow
+            case 'mushbooh':
+                return Theme.color.COLOR_DOUBTFUL_BG;
             default:
-                return '#F5F5F5';
+                return Theme.color.COLOR_BG;
+        }
+    };
+
+    // Helper function to get status shadow config
+    const getStatusShadow = (status: string) => {
+        switch (status?.toLowerCase()) {
+            case 'halal':
+                return Theme.shadows.sh_glow_halal;
+            case 'haram':
+                return Theme.shadows.sh_glow_haram;
+            case 'doubtful':
+            case 'doubt':
+            case 'musbooh':
+            case 'mushbooh':
+                return Theme.shadows.sh_glow_doubtful;
+            default:
+                return Theme.shadows.sh_card;
         }
     };
 
@@ -75,35 +99,40 @@ function IngredientsResult() {
             case 'haram':
                 return 'close-circle';
             case 'doubtful':
+            case 'doubt':
             case 'musbooh':
+            case 'mushbooh':
                 return 'alert-circle';
             default:
                 return 'help-circle';
         }
     };
 
-    // Call halal check API when component mounts OR use pre-loaded result
-    useEffect(() => {
-        // If we have pre-loaded result from history, use it directly
-        if (halalCheckResult) {
-            console.log('Using pre-loaded halal check result from history');
-            setHalalStatus(halalCheckResult);
-        } else if (ingredients && ingredients.trim().length > 0) {
-            // Otherwise, perform new API call
-            handleHalalCheck();
+    // Helper function to get status summary text
+    const getStatusTextLabel = (status: string) => {
+        switch (status?.toLowerCase()) {
+            case 'halal':
+                return 'Halal Certified / Permitted';
+            case 'haram':
+                return 'Haram / Avoid Product';
+            case 'doubtful':
+            case 'doubt':
+            case 'musbooh':
+            case 'mushbooh':
+                return 'Doubtful Ingredients Found';
+            default:
+                return 'Unknown Verification Status';
         }
-    }, []);
+    };
 
     // Format data for API request
-    const formatDataForAPI = (text: string, hash: string, front?: string, back?: string, ingredientsImg?: string) => {
-        // Clean the text
+    const formatDataForAPI = React.useCallback((text: string, hash: string, front?: string, back?: string, ingredientsImg?: string) => {
         const cleanedText = text
-            .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-            .replace(/\n+/g, ' ') // Replace newlines with space
-            .trim(); // Remove leading/trailing whitespace
+            .replace(/\s+/g, ' ')
+            .replace(/\n+/g, ' ')
+            .trim();
 
-        // Prepare data in a format suitable for API
-        const apiData = {
+        return {
             text: cleanedText,
             ingredients_hash: hash,
             front_image: front,
@@ -111,25 +140,18 @@ function IngredientsResult() {
             ingredients_image: ingredientsImg,
             product_name: productName,
         };
-
-        return apiData;
-    };
+    }, [productName]);
 
     // Handle halal check API call
-    const handleHalalCheck = async () => {
+    const handleHalalCheck = React.useCallback(async () => {
         try {
-            // Format the data before sending
             const formattedData = formatDataForAPI(ingredients, route.params.ingredients_hash, frontImage, backImage, ingredientsImage);
-
             console.log('Sending data to API:', JSON.stringify(formattedData, null, 2));
 
-            // Send formatted data to API
             const result = await halalCheck(formattedData).unwrap();
-
             console.log('Halal check API response:', result);
             setHalalStatus(result);
 
-            // Save to AsyncStorage scan history (only for new scans, not from history)
             try {
                 await scanHistoryStorage.addScan({
                     ingredients,
@@ -140,19 +162,29 @@ function IngredientsResult() {
                 console.log('Scan saved to history');
             } catch (storageError) {
                 console.error('Failed to save scan to history:', storageError);
-                // Don't show error to user, just log it
             }
         } catch (error: any) {
             console.error('Error checking halal status:', error.message);
             setHalalStatus(null);
         }
-    };
+    }, [formatDataForAPI, ingredients, route.params.ingredients_hash, frontImage, backImage, ingredientsImage, halalCheck, productName, imageUri]);
+
+    // Call halal check API when component mounts OR use pre-loaded result
+    useEffect(() => {
+        if (halalCheckResult) {
+            console.log('Using pre-loaded halal check result from history');
+            setHalalStatus(halalCheckResult);
+        } else if (ingredients && ingredients.trim().length > 0) {
+            handleHalalCheck();
+        }
+    }, [halalCheckResult, ingredients, handleHalalCheck]);
 
     const handleScroll = (event: any) => {
         const scrollY = event.nativeEvent.contentOffset.y;
         const isMushbooh = halalStatus?.overall_status?.toLowerCase() === 'musbooh' || 
                           halalStatus?.overall_status?.toLowerCase() === 'mushbooh' || 
-                          halalStatus?.overall_status?.toLowerCase() === 'doubtful';
+                          halalStatus?.overall_status?.toLowerCase() === 'doubtful' ||
+                          halalStatus?.overall_status?.toLowerCase() === 'doubt';
 
         if (scrollY > 50 && isMushbooh && !hasShownImproveModal && !isCheckingHalal) {
             setIsImproveModalVisible(true);
@@ -191,8 +223,6 @@ function IngredientsResult() {
         setIsSubmittingImprovement(true);
         try {
             const improvementData: any = {};
-
-            // Upload all images in parallel
             const uploadPromises: Promise<void>[] = [];
 
             if (barcodeImage) {
@@ -223,7 +253,6 @@ function IngredientsResult() {
 
             await Promise.all(uploadPromises);
 
-            // 4. Send to backend
             await improveCheck({
                 id: halalStatus.id,
                 data: improvementData
@@ -239,9 +268,45 @@ function IngredientsResult() {
         }
     };
 
+    const handleShare = async () => {
+        try {
+            if (!halalStatus) return;
+            const statusStr = halalStatus.overall_status?.toUpperCase() || 'UNKNOWN';
+            const prodName = productName || 'Product';
+            
+            await Share.share({
+                message: `Halal Check Verification Results:\nProduct: ${prodName}\nOverall Status: ${statusStr}\n\nChecked with Halal Check AI app.`,
+            });
+        } catch (error) {
+            console.error('Error sharing:', error);
+        }
+    };
+
+    const toggleIngredient = (idx: number) => {
+        if (expandedIngredients.includes(idx)) {
+            setExpandedIngredients(expandedIngredients.filter(i => i !== idx));
+        } else {
+            setExpandedIngredients([...expandedIngredients, idx]);
+        }
+    };
+
+    // Calculate Tally metrics
+    const ingredientsAnalysis = halalStatus?.ingredients_analysis || [];
+    const tally = { halal: 0, doubtful: 0, haram: 0 };
+    ingredientsAnalysis.forEach((item: any) => {
+        const s = item.status?.toLowerCase();
+        if (s === 'halal') {
+            tally.halal++;
+        } else if (s === 'haram') {
+            tally.haram++;
+        } else if (s === 'doubtful' || s === 'musbooh' || s === 'mushbooh' || s === 'doubt') {
+            tally.doubtful++;
+        }
+    });
+
     return (
         <SafeAreaView style={styles.container}>
-            {/* Enhanced Header */}
+            {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity
                     style={styles.backButton}
@@ -251,11 +316,21 @@ function IngredientsResult() {
                     <Icon name="arrow-back" size={24} color={Theme.color.COLOR_TEXT} />
                 </TouchableOpacity>
                 <View style={styles.headerTitleContainer}>
-                    <SmallText textStyles={styles.headerTitle} size={4.5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                    <SmallText textStyles={styles.headerTitle} size={4.2} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
                         Verification Results
                     </SmallText>
                 </View>
-                <View style={styles.backButton} />
+                {halalStatus ? (
+                    <TouchableOpacity
+                        style={styles.backButton}
+                        onPress={handleShare}
+                        activeOpacity={0.7}
+                    >
+                        <Icon name="share-social-outline" size={22} color={Theme.color.COLOR_TEXT} />
+                    </TouchableOpacity>
+                ) : (
+                    <View style={styles.backButton} />
+                )}
             </View>
 
             <ScrollView
@@ -265,70 +340,72 @@ function IngredientsResult() {
                 onScroll={handleScroll}
                 scrollEventThrottle={16}
             >
-                {/* Product Images Section */}
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.imagesCarousel}
-                    contentContainerStyle={styles.imagesCarouselContent}
-                >
-                    {frontImage && (
-                        <View style={styles.imageCard}>
-                            <Image source={{ uri: frontImage }} style={styles.capturedImage} resizeMode="cover" />
-                            <View style={styles.imageOverlay}>
-                                <Icon name="camera" size={16} color={Theme.color.COLOR_WHITE} />
-                                <SmallText textStyles={styles.imageLabel} size={2.2}>Front View</SmallText>
+                {/* Horizontal Product Images Carousel */}
+                {(frontImage || backImage || ingredientsImage || imageUri) && (
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        style={styles.imagesCarousel}
+                        contentContainerStyle={styles.imagesCarouselContent}
+                    >
+                        {frontImage && (
+                            <View style={[styles.imageCard, Theme.shadows.sh_card]}>
+                                <Image source={{ uri: frontImage }} style={styles.capturedImage} resizeMode="cover" />
+                                <View style={styles.imageOverlay}>
+                                    <Icon name="camera" size={14} color={Theme.color.COLOR_WHITE} />
+                                    <SmallText textStyles={styles.imageLabel} size={2.5} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM}>Front View</SmallText>
+                                </View>
                             </View>
-                        </View>
-                    )}
-                    {backImage && (
-                        <View style={styles.imageCard}>
-                            <Image source={{ uri: backImage }} style={styles.capturedImage} resizeMode="cover" />
-                            <View style={styles.imageOverlay}>
-                                <Icon name="camera" size={16} color={Theme.color.COLOR_WHITE} />
-                                <SmallText textStyles={styles.imageLabel} size={2.2}>Back View</SmallText>
+                        )}
+                        {backImage && (
+                            <View style={[styles.imageCard, Theme.shadows.sh_card]}>
+                                <Image source={{ uri: backImage }} style={styles.capturedImage} resizeMode="cover" />
+                                <View style={styles.imageOverlay}>
+                                    <Icon name="camera" size={14} color={Theme.color.COLOR_WHITE} />
+                                    <SmallText textStyles={styles.imageLabel} size={2.5} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM}>Back View</SmallText>
+                                </View>
                             </View>
-                        </View>
-                    )}
-                    {ingredientsImage && (
-                        <View style={styles.imageCard}>
-                            <Image source={{ uri: ingredientsImage }} style={styles.capturedImage} resizeMode="cover" />
-                            <View style={styles.imageOverlay}>
-                                <Icon name="camera" size={16} color={Theme.color.COLOR_WHITE} />
-                                <SmallText textStyles={styles.imageLabel} size={2.2}>Ingredients</SmallText>
+                        )}
+                        {ingredientsImage && (
+                            <View style={[styles.imageCard, Theme.shadows.sh_card]}>
+                                <Image source={{ uri: ingredientsImage }} style={styles.capturedImage} resizeMode="cover" />
+                                <View style={styles.imageOverlay}>
+                                    <Icon name="camera" size={14} color={Theme.color.COLOR_WHITE} />
+                                    <SmallText textStyles={styles.imageLabel} size={2.5} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM}>Ingredients</SmallText>
+                                </View>
                             </View>
-                        </View>
-                    )}
-                    {!frontImage && !backImage && !ingredientsImage && imageUri && (
-                        <View style={styles.imageContainer}>
-                            <Image source={{ uri: imageUri }} style={styles.capturedImage} resizeMode="cover" />
-                            <View style={styles.imageOverlay}>
-                                <Icon name="camera" size={20} color={Theme.color.COLOR_WHITE} />
-                                <SmallText textStyles={styles.imageLabel} size={2.5}>Scanned Image</SmallText>
+                        )}
+                        {!frontImage && !backImage && !ingredientsImage && imageUri && (
+                            <View style={[styles.imageCard, Theme.shadows.sh_card]}>
+                                <Image source={{ uri: imageUri }} style={styles.capturedImage} resizeMode="cover" />
+                                <View style={styles.imageOverlay}>
+                                    <Icon name="camera" size={14} color={Theme.color.COLOR_WHITE} />
+                                    <SmallText textStyles={styles.imageLabel} size={2.5} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM}>Scanned Image</SmallText>
+                                </View>
                             </View>
-                        </View>
-                    )}
-                </ScrollView>
+                        )}
+                    </ScrollView>
+                )}
 
                 {/* Halal Check Status Section */}
                 <View style={styles.halalCheckContainer}>
                     {isCheckingHalal ? (
-                        <View style={styles.loadingContainer}>
-                            <ActivityIndicator size="large" color={Theme.color.COLOR_BLUE} />
-                            <SmallText textStyles={styles.loadingText} size={3.5} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM}>
+                        <View style={[styles.loadingContainer, Theme.shadows.sh_card]}>
+                            <ActivityIndicator size="large" color={Theme.color.COLOR_PRIMARY_GREEN} />
+                            <SmallText textStyles={styles.loadingText} size={3.8} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
                                 Analyzing ingredients...
                             </SmallText>
-                            <SmallText textStyles={styles.loadingSubtext} size={2.5}>
+                            <SmallText textStyles={styles.loadingSubtext} size={2.8} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM}>
                                 This may take a few seconds
                             </SmallText>
                         </View>
                     ) : halalCheckError ? (
-                        <View style={styles.errorContainer}>
-                            <Icon name="alert-circle" size={48} color={Theme.color.COLOR_RED} />
-                            <SmallText textStyles={styles.errorTitle} size={4} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                        <View style={[styles.errorContainer, Theme.shadows.sh_card]}>
+                            <Icon name="alert-circle" size={48} color={Theme.color.COLOR_HARAM} />
+                            <SmallText textStyles={styles.errorTitle} size={4.2} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
                                 Verification Failed
                             </SmallText>
-                            <SmallText textStyles={styles.errorText} size={3}>
+                            <SmallText textStyles={styles.errorText} size={3.2} fontFamily={Theme.fonts.FONT_NUNITO_REGULAR}>
                                 Unable to verify ingredients. Please check your connection and try again.
                             </SmallText>
                             <TouchableOpacity
@@ -337,17 +414,26 @@ function IngredientsResult() {
                                 activeOpacity={0.8}
                             >
                                 <Icon name="refresh" size={18} color={Theme.color.COLOR_WHITE} style={styles.retryIcon} />
-                                <SmallText textStyles={styles.retryButtonText} size={3} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                                <SmallText textStyles={styles.retryButtonText} size={3.2} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
                                     Retry Verification
                                 </SmallText>
                             </TouchableOpacity>
                         </View>
                     ) : halalStatus ? (
                         <>
-                            {/* Enhanced Overall Product Status Card */}
+                            {/* Product Name Header */}
+                            {productName ? (
+                                <View style={styles.productNameContainer}>
+                                    <SmallText textStyles={styles.productNameLabel} size={2.6} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>PRODUCT NAME</SmallText>
+                                    <SmallText textStyles={styles.productNameText} size={4.5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>{productName}</SmallText>
+                                </View>
+                            ) : null}
+
+                            {/* Overall Product Status Hero Card */}
                             {halalStatus?.overall_status && (
                                 <View style={[
                                     styles.overallStatusCard,
+                                    getStatusShadow(halalStatus.overall_status),
                                     {
                                         backgroundColor: getStatusBgColor(halalStatus.overall_status),
                                         borderColor: getStatusColor(halalStatus.overall_status),
@@ -356,128 +442,256 @@ function IngredientsResult() {
                                     <View style={styles.overallStatusHeader}>
                                         <View style={[
                                             styles.statusIconContainer,
-                                            { backgroundColor: getStatusColor(halalStatus.overall_status) }
+                                            { backgroundColor: 'rgba(255, 255, 255, 0.7)', borderColor: getStatusColor(halalStatus.overall_status), borderWidth: 1 }
                                         ]}>
                                             <Icon
                                                 name={getStatusIcon(halalStatus.overall_status)}
                                                 size={32}
-                                                color={Theme.color.COLOR_WHITE}
+                                                color={getStatusColor(halalStatus.overall_status)}
                                             />
                                         </View>
                                         <View style={styles.overallStatusTextContainer}>
-                                            <SmallText textStyles={styles.overallStatusLabel} size={2.5}>
-                                                Overall Product Status
+                                            <SmallText textStyles={styles.overallStatusLabel} size={2.6} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                                                VERDICT
                                             </SmallText>
                                             <SmallText
                                                 textStyles={{
                                                     ...styles.overallStatusText,
                                                     color: getStatusColor(halalStatus.overall_status)
                                                 }}
-                                                size={5}
+                                                size={6.2}
                                                 fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}
                                             >
                                                 {halalStatus.overall_status.toUpperCase()}
                                             </SmallText>
+                                            <SmallText textStyles={styles.overallStatusLabelText} size={3} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM}>
+                                                {getStatusTextLabel(halalStatus.overall_status)}
+                                            </SmallText>
                                         </View>
                                     </View>
-                                    {halalStatus.reasoning && (
-                                        <View style={styles.reasoningContainer}>
-                                            <Icon name="information-circle" size={18} color={getStatusColor(halalStatus.overall_status)} />
-                                            <SmallText textStyles={styles.reasoningText} size={3}>
+
+                                    {/* Tally Row */}
+                                    <View style={styles.tallyDivider} />
+                                    <View style={styles.tallyRow}>
+                                        <View style={styles.tallyColumn}>
+                                            <SmallText textStyles={{ ...styles.tallyCount, color: Theme.color.COLOR_HALAL }} size={6} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                                                {tally.halal}
+                                            </SmallText>
+                                            <SmallText textStyles={styles.tallyLabel} size={2.8} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM}>
+                                                Halal
+                                            </SmallText>
+                                        </View>
+                                        <View style={styles.tallyColumn}>
+                                            <SmallText textStyles={{ ...styles.tallyCount, color: Theme.color.COLOR_DOUBTFUL }} size={6} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                                                {tally.doubtful}
+                                            </SmallText>
+                                            <SmallText textStyles={styles.tallyLabel} size={2.8} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM}>
+                                                Doubtful
+                                            </SmallText>
+                                        </View>
+                                        <View style={styles.tallyColumn}>
+                                            <SmallText textStyles={{ ...styles.tallyCount, color: Theme.color.COLOR_HARAM }} size={6} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                                                {tally.haram}
+                                            </SmallText>
+                                            <SmallText textStyles={styles.tallyLabel} size={2.8} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM}>
+                                                Haram
+                                            </SmallText>
+                                        </View>
+                                    </View>
+                                </View>
+                            )}
+
+                            {/* AI reasoning Accordion Card */}
+                            {halalStatus.reasoning && (
+                                <View style={[styles.accordionCard, Theme.shadows.sh_card]}>
+                                    <TouchableOpacity 
+                                        style={styles.accordionHeader} 
+                                        onPress={() => setReasonOpen(!reasonOpen)}
+                                        activeOpacity={0.7}
+                                    >
+                                        <View style={styles.accordionIconContainer}>
+                                            <Icon name="sparkles" size={16} color={Theme.color.COLOR_PRIMARY_GREEN} />
+                                        </View>
+                                        <View style={styles.accordionTitleContainer}>
+                                            <SmallText textStyles={styles.accordionSub} size={2.4} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                                                AI REASONING
+                                            </SmallText>
+                                            <SmallText textStyles={styles.accordionTitle} size={3.6} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                                                Why this verdict?
+                                            </SmallText>
+                                        </View>
+                                        <Icon 
+                                            name={reasonOpen ? "chevron-up" : "chevron-down"} 
+                                            size={20} 
+                                            color={Theme.color.COLOR_MUTED} 
+                                        />
+                                    </TouchableOpacity>
+                                    {reasonOpen && (
+                                        <View style={styles.accordionContent}>
+                                            <SmallText textStyles={styles.reasoningText} size={3.4} fontFamily={Theme.fonts.FONT_NUNITO_REGULAR}>
                                                 {halalStatus.reasoning}
                                             </SmallText>
+                                            <View style={styles.infoBadgeRow}>
+                                                <Icon name="information-circle-outline" size={16} color={Theme.color.COLOR_MUTED} />
+                                                <SmallText textStyles={styles.infoBadgeText} size={2.8} fontFamily={Theme.fonts.FONT_NUNITO_REGULAR}>
+                                                    Verdict generated by Halal-Check AI. Cross-checked against registered AMJA, IFANCA, and JAKIM databases.
+                                                </SmallText>
+                                            </View>
                                         </View>
                                     )}
                                 </View>
                             )}
 
-                            {/* Enhanced Ingredients Analysis List */}
+                            {/* Ingredients Analysis List Container */}
                             {halalStatus.ingredients_analysis && halalStatus.ingredients_analysis.length > 0 && (
-                                <View style={styles.ingredientsStatusContainer}>
+                                <View style={styles.ingredientsListWrapper}>
                                     <View style={styles.sectionHeader}>
-                                        <Icon name="list" size={22} color={Theme.color.COLOR_TEXT} />
                                         <SmallText
                                             textStyles={styles.ingredientsStatusTitle}
                                             size={4}
                                             fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}
                                         >
-                                            Ingredient Analysis
+                                            Ingredient Breakdown
                                         </SmallText>
                                         <View style={styles.badge}>
-                                            <SmallText textStyles={styles.badgeText} size={2.5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
-                                                {halalStatus.ingredients_analysis.length}
+                                            <SmallText textStyles={styles.badgeText} size={2.8} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                                                {halalStatus.ingredients_analysis.length} Detected
                                             </SmallText>
                                         </View>
                                     </View>
-                                    {halalStatus.ingredients_analysis.map((item: any, index: number) => (
-                                        <View
-                                            key={index}
-                                            style={[
-                                                styles.ingredientStatusCard,
-                                                { borderLeftColor: getStatusColor(item.status) }
-                                            ]}
-                                        >
-                                            <View style={styles.ingredientStatusHeader}>
-                                                <View style={[
-                                                    styles.ingredientStatusBadge,
-                                                    { backgroundColor: getStatusBgColor(item.status) }
-                                                ]}>
-                                                    <Icon
-                                                        name={getStatusIcon(item.status)}
-                                                        size={16}
-                                                        color={getStatusColor(item.status)}
-                                                    />
-                                                    <SmallText
-                                                        textStyles={{
-                                                            ...styles.ingredientStatusBadgeText,
-                                                            color: getStatusColor(item.status)
-                                                        }}
-                                                        size={2.5}
-                                                        fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}
-                                                    >
-                                                        {item.status?.toUpperCase()}
-                                                    </SmallText>
-                                                </View>
-                                                <SmallText
-                                                    textStyles={styles.ingredientStatusName}
-                                                    size={3.5}
-                                                    fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}
+
+                                    <View style={[styles.breakdownCardContainer, Theme.shadows.sh_card]}>
+                                        {(halalStatus.ingredients_analysis || []).map((item: any, index: number) => {
+                                            const isExpanded = expandedIngredients.includes(index);
+                                            const hasNote = !!item.note;
+                                            const itemColor = getStatusColor(item.status);
+                                            const itemBg = getStatusBgColor(item.status);
+                                            const isLast = index === (halalStatus.ingredients_analysis || []).length - 1;
+
+                                            return (
+                                                <View
+                                                    key={index}
+                                                    style={[
+                                                        styles.breakdownItemRow,
+                                                        !isLast && styles.breakdownRowBorder
+                                                    ]}
                                                 >
-                                                    {item.component_name}
-                                                </SmallText>
-                                            </View>
-                                            {item.note && (
-                                                <View style={styles.noteContainer}>
-                                                    <Icon name="document-text" size={16} color={Theme.color.COLOT_SUBTEXT} />
-                                                    <SmallText textStyles={styles.ingredientReasonText} size={3}>
-                                                        {item.note}
-                                                    </SmallText>
+                                                    <TouchableOpacity
+                                                        onPress={() => hasNote && toggleIngredient(index)}
+                                                        activeOpacity={hasNote ? 0.7 : 1}
+                                                        style={styles.breakdownItemHeader}
+                                                    >
+                                                        {/* Status Indicator Dot with outer glow border */}
+                                                        <View style={[
+                                                            styles.indicatorDotContainer,
+                                                            { borderColor: itemBg }
+                                                        ]}>
+                                                            <View style={[styles.indicatorDot, { backgroundColor: itemColor }]} />
+                                                        </View>
+
+                                                        <View style={styles.breakdownItemNameContainer}>
+                                                            <SmallText
+                                                                textStyles={{
+                                                                    ...styles.ingredientName,
+                                                                    color: item.status?.toLowerCase() === 'halal' ? Theme.color.COLOR_INK : itemColor
+                                                                }}
+                                                                size={3.4}
+                                                                fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}
+                                                            >
+                                                                {item.component_name}
+                                                            </SmallText>
+                                                            {!isExpanded && hasNote && (
+                                                                <SmallText textStyles={styles.ingredientNotePreview} size={2.8} numberOfLines={1} fontFamily={Theme.fonts.FONT_NUNITO_REGULAR}>
+                                                                    {item.note}
+                                                                </SmallText>
+                                                            )}
+                                                        </View>
+
+                                                        {/* Status Pill */}
+                                                        <View style={[
+                                                            styles.ingredientStatusBadge,
+                                                            { backgroundColor: itemBg }
+                                                        ]}>
+                                                            <SmallText
+                                                                textStyles={{
+                                                                    ...styles.ingredientStatusBadgeText,
+                                                                    color: itemColor
+                                                                }}
+                                                                size={2.4}
+                                                                fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}
+                                                            >
+                                                                {item.status?.toUpperCase()}
+                                                            </SmallText>
+                                                        </View>
+
+                                                        {hasNote && (
+                                                            <Icon 
+                                                                name={isExpanded ? "chevron-up" : "chevron-down"} 
+                                                                size={16} 
+                                                                color={Theme.color.COLOR_MUTED_2} 
+                                                                style={{ marginLeft: 6 }}
+                                                            />
+                                                        )}
+                                                    </TouchableOpacity>
+
+                                                    {isExpanded && hasNote && (
+                                                        <View style={styles.breakdownItemNoteExpanded}>
+                                                            <SmallText textStyles={styles.ingredientNoteFull} size={3} fontFamily={Theme.fonts.FONT_NUNITO_REGULAR}>
+                                                                {item.note}
+                                                            </SmallText>
+                                                        </View>
+                                                    )}
                                                 </View>
-                                            )}
-                                        </View>
-                                    ))}
+                                            );
+                                        })}
+                                    </View>
                                 </View>
+                            )}
+
+                            {/* Help Us Improve Button (If Doubtful status exists) */}
+                            {(halalStatus.overall_status?.toLowerCase() === 'musbooh' || 
+                              halalStatus.overall_status?.toLowerCase() === 'mushbooh' || 
+                              halalStatus.overall_status?.toLowerCase() === 'doubtful' ||
+                              halalStatus.overall_status?.toLowerCase() === 'doubt') && (
+                                <TouchableOpacity 
+                                    style={styles.improveButtonOutline}
+                                    onPress={() => setIsImproveModalVisible(true)}
+                                    activeOpacity={0.7}
+                                >
+                                    <View style={styles.improveButtonIconContainer}>
+                                        <Icon name="cloud-upload" size={18} color={Theme.color.COLOR_PRIMARY_GREEN} />
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <SmallText textStyles={styles.improveButtonText} size={3.4} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                                            Help us improve this scan
+                                        </SmallText>
+                                        <SmallText textStyles={styles.improveButtonSub} size={2.8} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM}>
+                                            Add barcode, manufacturer & extra photos
+                                        </SmallText>
+                                    </View>
+                                    <Icon name="add" size={20} color={Theme.color.COLOR_PRIMARY_GREEN} />
+                                </TouchableOpacity>
                             )}
                         </>
                     ) : null}
                 </View>
 
-                {/* Action Buttons */}
+                {/* Bottom Action Button */}
                 <View style={styles.actionsContainer}>
                     <TouchableOpacity
-                        style={styles.primaryButton}
+                        style={[styles.primaryButton, Theme.shadows.sh_button]}
                         onPress={() => navigation.goBack()}
                         activeOpacity={0.8}
                     >
-                        <Icon name="camera" size={20} color={Theme.color.COLOR_WHITE} style={styles.buttonIcon} />
-                        <SmallText textStyles={styles.primaryButtonText} size={3.5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
-                            Scan Again
+                        <Icon name="scan" size={20} color={Theme.color.COLOR_WHITE} style={styles.buttonIcon} />
+                        <SmallText textStyles={styles.primaryButtonText} size={3.6} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                            Scan Another Product
                         </SmallText>
                     </TouchableOpacity>
                 </View>
             </ScrollView>
 
-            {/* Improvement Modal */}
+            {/* Improvement Modal - Premium Dark Emerald Glassmorphic Sheet */}
             <Modal
                 visible={isImproveModalVisible}
                 transparent={true}
@@ -486,26 +700,29 @@ function IngredientsResult() {
             >
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
+                        {/* Pull notch */}
+                        <View style={styles.modalNotch} />
+                        
                         <View style={styles.modalHeader}>
                             <View style={styles.modalIconContainer}>
-                                <Icon name="help-buoy" size={30} color={Theme.color.COLOR_BLUE} />
+                                <Icon name="help-buoy" size={26} color={Theme.color.COLOR_WHITE} />
                             </View>
                             <View style={{ flex: 1 }}>
                                 <SmallText textStyles={styles.modalTitle} size={4.5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
                                     Help Us Improve!
                                 </SmallText>
-                                <SmallText textStyles={styles.modalSubTitle} size={2.8}>
-                                    Analysis for this product is doubtful.
+                                <SmallText textStyles={styles.modalSubTitle} size={2.8} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                                    ADDITIONAL DETAILS REQUIRED
                                 </SmallText>
                             </View>
-                            <TouchableOpacity onPress={() => setIsImproveModalVisible(false)}>
-                                <Icon name="close" size={24} color={Theme.color.COLOT_SUBTEXT} />
+                            <TouchableOpacity style={styles.modalCloseIconBtn} onPress={() => setIsImproveModalVisible(false)}>
+                                <Icon name="close" size={24} color="rgba(255,255,255,0.6)" />
                             </TouchableOpacity>
                         </View>
 
-                        <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: height(60) }}>
-                            <SmallText textStyles={styles.modalDescription} size={3}>
-                                Take clear photos of the product details to help our AI provide more accurate results.
+                        <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: height(50) }}>
+                            <SmallText textStyles={styles.modalDescription} size={3.2} fontFamily={Theme.fonts.FONT_NUNITO_REGULAR}>
+                                Capture or choose clear photos of the barcode and manufacturer info to help our AI verify this product accurately.
                             </SmallText>
 
                             <View style={styles.specificImageSection}>
@@ -518,7 +735,7 @@ function IngredientsResult() {
                                         <SmallText textStyles={styles.fieldLabel} size={3.5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
                                             Barcode Image
                                         </SmallText>
-                                        <SmallText textStyles={styles.fieldSubLabel} size={2.5}>
+                                        <SmallText textStyles={styles.fieldSubLabel} size={2.8} fontFamily={Theme.fonts.FONT_NUNITO_REGULAR}>
                                             Capture the product barcode clearly
                                         </SmallText>
                                     </View>
@@ -526,7 +743,7 @@ function IngredientsResult() {
                                         {barcodeImage ? (
                                             <Image source={{ uri: barcodeImage }} style={styles.previewThumbnail} />
                                         ) : (
-                                            <Icon name="barcode" size={24} color={Theme.color.COLOR_BLUE} />
+                                            <Icon name="barcode" size={22} color={Theme.color.COLOR_WHITE} />
                                         )}
                                     </View>
                                 </TouchableOpacity>
@@ -540,15 +757,15 @@ function IngredientsResult() {
                                         <SmallText textStyles={styles.fieldLabel} size={3.5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
                                             Manufacturer Info
                                         </SmallText>
-                                        <SmallText textStyles={styles.fieldSubLabel} size={2.5}>
-                                            Photo of the brand/company details
+                                        <SmallText textStyles={styles.fieldSubLabel} size={2.8} fontFamily={Theme.fonts.FONT_NUNITO_REGULAR}>
+                                            Photo of brand, certification logo, or contact info
                                         </SmallText>
                                     </View>
                                     <View style={[styles.captureButton, manufacturerImage && styles.captureButtonActive]}>
                                         {manufacturerImage ? (
                                             <Image source={{ uri: manufacturerImage }} style={styles.previewThumbnail} />
                                         ) : (
-                                            <Icon name="business" size={24} color={Theme.color.COLOR_BLUE} />
+                                            <Icon name="business" size={22} color={Theme.color.COLOR_WHITE} />
                                         )}
                                     </View>
                                 </TouchableOpacity>
@@ -556,7 +773,7 @@ function IngredientsResult() {
 
                             <View style={styles.additionalImagesSection}>
                                 <SmallText textStyles={styles.fieldLabel} size={3.5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
-                                    Other Product Images
+                                    Other Supporting Photos
                                 </SmallText>
                                 <View style={styles.additionalImagesGrid}>
                                     {additionalImages.map((uri, index) => (
@@ -566,14 +783,14 @@ function IngredientsResult() {
                                                 style={styles.removeImageButton}
                                                 onPress={() => setAdditionalImages(additionalImages.filter((_, i) => i !== index))}
                                             >
-                                                <Icon name="close-circle" size={20} color={Theme.color.COLOR_RED} />
+                                                <Icon name="close-circle" size={22} color={Theme.color.COLOR_HARAM} />
                                             </TouchableOpacity>
                                         </View>
                                     ))}
                                     {additionalImages.length < 3 && (
                                         <TouchableOpacity style={styles.addImageButton} onPress={() => handleCaptureImage('additional')}>
-                                            <Icon name="add" size={30} color={Theme.color.COLOT_SUBTEXT} />
-                                            <SmallText size={2}>Add Photo</SmallText>
+                                            <Icon name="add" size={28} color="rgba(255,255,255,0.7)" />
+                                            <SmallText textStyles={{ color: 'rgba(255,255,255,0.7)' }} size={2.2} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM}>Add Photo</SmallText>
                                         </TouchableOpacity>
                                     )}
                                 </View>
@@ -587,15 +804,15 @@ function IngredientsResult() {
                                 disabled={isSubmittingImprovement}
                             >
                                 {isSubmittingImprovement ? (
-                                    <ActivityIndicator color={Theme.color.COLOR_WHITE} />
+                                    <ActivityIndicator color={Theme.color.COLOR_PRIMARY_GREEN} />
                                 ) : (
-                                    <SmallText textStyles={styles.modalSubmitText} size={3.5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                                    <SmallText textStyles={styles.modalSubmitText} size={3.6} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
                                         Submit Feedback
                                     </SmallText>
                                 )}
                             </TouchableOpacity>
                             <TouchableOpacity style={styles.modalCloseButton} onPress={() => setIsImproveModalVisible(false)}>
-                                <SmallText textStyles={styles.modalCloseText} size={3}>Maybe Later</SmallText>
+                                <SmallText textStyles={styles.modalCloseText} size={3} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM}>Maybe Later</SmallText>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -607,397 +824,486 @@ function IngredientsResult() {
 
 const styles = StyleSheet.create({
     container: {
+        backgroundColor: Theme.color.COLOR_BG,
         flex: 1,
-        backgroundColor: Theme.color.COLOR_WHITE,
     },
     header: {
-        flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: width(5.3),
-        paddingTop: height(1.2),
-        paddingBottom: height(2),
         backgroundColor: Theme.color.COLOR_WHITE,
+        borderBottomColor: Theme.color.COLOR_BORDER,
         borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-        elevation: 2,
+        flexDirection: 'row',
+        paddingBottom: height(1.5),
+        paddingHorizontal: width(4),
+        paddingTop: height(1),
     },
     backButton: {
-        width: width(10.6),
-        height: width(10.6),
-        justifyContent: 'center',
         alignItems: 'center',
+        borderRadius: width(5.5),
+        height: width(11),
+        justifyContent: 'center',
+        width: width(11),
     },
     headerTitleContainer: {
-        flex: 1,
         alignItems: 'center',
+        flex: 1,
     },
     headerTitle: {
-        color: Theme.color.COLOR_TEXT,
+        color: Theme.color.COLOR_INK,
     },
     content: {
         flex: 1,
     },
     contentContainer: {
-        padding: width(5.3),
-        paddingBottom: height(5),
-    },
-    imageContainer: {
-        width: width(89.4),
-        height: height(27),
-        borderRadius: 16,
-        overflow: 'hidden',
-        marginBottom: height(3),
-        backgroundColor: '#F5F5F5',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 5,
+        padding: width(4.5),
+        paddingBottom: height(6),
     },
     imagesCarousel: {
-        marginBottom: height(3),
+        marginBottom: height(2.5),
     },
     imagesCarouselContent: {
-        paddingRight: width(5.3),
+        gap: width(3.5),
+        paddingRight: width(4.5),
     },
     imageCard: {
-        width: width(74.6),
-        height: height(27),
-        borderRadius: 16,
+        backgroundColor: Theme.color.COLOR_WHITE,
+        borderRadius: 20,
+        height: height(22),
         overflow: 'hidden',
-        marginRight: width(4.2),
-        backgroundColor: '#F5F5F5',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 5,
+        width: width(68),
     },
     capturedImage: {
-        width: '100%',
         height: '100%',
+        width: '100%',
     },
     imageOverlay: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: width(3.2),
-        paddingVertical: height(1),
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        bottom: 0,
+        flexDirection: 'row',
+        gap: 6,
+        left: 0,
+        paddingHorizontal: width(3.5),
+        paddingVertical: height(0.8),
+        position: 'absolute',
+        right: 0,
     },
     imageLabel: {
         color: Theme.color.COLOR_WHITE,
-        marginLeft: 6,
     },
     halalCheckContainer: {
-        marginBottom: height(3),
+        marginBottom: height(2),
+    },
+    productNameContainer: {
+        marginBottom: height(2),
+        paddingHorizontal: 4,
+    },
+    productNameLabel: {
+        color: Theme.color.COLOR_MUTED_2,
+        letterSpacing: 0.8,
+        marginBottom: 2,
+    },
+    productNameText: {
+        color: Theme.color.COLOR_INK,
     },
     loadingContainer: {
         alignItems: 'center',
-        justifyContent: 'center',
-        padding: width(10.6),
         backgroundColor: Theme.color.COLOR_WHITE,
-        borderRadius: 16,
+        borderColor: Theme.color.COLOR_BORDER,
+        borderRadius: 20,
         borderWidth: 1,
-        borderColor: '#E5E5E5',
+        justifyContent: 'center',
+        padding: width(8),
     },
     loadingText: {
+        color: Theme.color.COLOR_INK,
         marginTop: height(2),
-        color: Theme.color.COLOR_TEXT,
     },
     loadingSubtext: {
-        marginTop: height(1),
-        color: Theme.color.COLOT_SUBTEXT,
+        color: Theme.color.COLOR_MUTED,
+        marginTop: height(0.6),
     },
     errorContainer: {
         alignItems: 'center',
-        justifyContent: 'center',
-        padding: width(8.5),
         backgroundColor: Theme.color.COLOR_WHITE,
-        borderRadius: 16,
-        borderWidth: 1,
         borderColor: '#FEE2E2',
+        borderRadius: 20,
+        borderWidth: 1,
+        justifyContent: 'center',
+        padding: width(8),
     },
     errorTitle: {
-        color: Theme.color.COLOR_RED,
-        marginTop: height(2),
-        marginBottom: height(1),
+        color: Theme.color.COLOR_HARAM,
+        marginBottom: height(0.8),
+        marginTop: height(1.5),
         textAlign: 'center',
     },
     errorText: {
-        color: Theme.color.COLOT_SUBTEXT,
+        color: Theme.color.COLOR_MUTED,
+        lineHeight: 18,
+        marginBottom: height(2.5),
         textAlign: 'center',
-        marginBottom: height(3),
-        lineHeight: 20,
     },
     retryButton: {
-        flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: Theme.color.COLOR_BLUE,
-        borderRadius: 12,
-        paddingVertical: height(1.5),
-        paddingHorizontal: width(6.4),
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-        elevation: 3,
+        backgroundColor: Theme.color.COLOR_PRIMARY_GREEN,
+        borderRadius: 14,
+        flexDirection: 'row',
+        paddingHorizontal: width(6),
+        paddingVertical: height(1.4),
     },
     retryIcon: {
-        marginRight: 8,
+        marginRight: 6,
     },
     retryButtonText: {
         color: Theme.color.COLOR_WHITE,
     },
-    sectionTitle: {
-        color: Theme.color.COLOR_TEXT,
-        marginBottom: height(2),
-    },
     overallStatusCard: {
-        borderRadius: 20,
-        padding: width(6.4),
-        marginBottom: height(3),
-        borderWidth: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-        elevation: 6,
+        borderRadius: 24,
+        borderWidth: 1.5,
+        marginBottom: height(2.5),
+        padding: width(5.5),
     },
     overallStatusHeader: {
-        flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: height(2),
+        flexDirection: 'row',
+        gap: width(4),
     },
     statusIconContainer: {
-        width: width(17),
-        height: width(17),
-        borderRadius: width(8.5),
-        justifyContent: 'center',
         alignItems: 'center',
-        marginRight: width(4.2),
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-        elevation: 3,
+        borderRadius: width(8),
+        height: width(16),
+        justifyContent: 'center',
+        width: width(16),
     },
     overallStatusTextContainer: {
         flex: 1,
     },
     overallStatusLabel: {
-        color: Theme.color.COLOT_SUBTEXT,
-        marginBottom: 6,
+        color: Theme.color.COLOR_MUTED,
+        letterSpacing: 0.8,
     },
     overallStatusText: {
-        fontSize: width(7.4),
-        lineHeight: width(9.6),
+        lineHeight: width(8.5),
+        marginBottom: 2,
+        marginTop: 1,
     },
-    reasoningContainer: {
+    overallStatusLabelText: {
+        color: Theme.color.COLOR_MUTED,
+    },
+    tallyDivider: {
+        borderColor: 'rgba(15, 20, 17, 0.12)',
+        borderStyle: 'dashed',
+        borderWidth: 0.8,
+        height: 1,
+        marginVertical: height(2),
+    },
+    tallyRow: {
+        alignItems: 'center',
         flexDirection: 'row',
-        alignItems: 'flex-start',
-        paddingTop: height(2),
+        justifyContent: 'space-between',
+        paddingHorizontal: 8,
+    },
+    tallyColumn: {
+        alignItems: 'center',
+        flex: 1,
+    },
+    tallyCount: {
+        lineHeight: width(7.5),
+    },
+    tallyLabel: {
+        color: Theme.color.COLOR_MUTED,
+        letterSpacing: 0.4,
+        marginTop: 2,
+    },
+    accordionCard: {
+        backgroundColor: Theme.color.COLOR_WHITE,
+        borderColor: Theme.color.COLOR_BORDER,
+        borderRadius: 20,
+        borderWidth: 1,
+        marginBottom: height(2.5),
+        overflow: 'hidden',
+    },
+    accordionHeader: {
+        alignItems: 'center',
+        flexDirection: 'row',
+        gap: 12,
+        padding: width(4.5),
+    },
+    accordionIconContainer: {
+        alignItems: 'center',
+        backgroundColor: Theme.color.COLOR_PRIMARY_GREEN_BG,
+        borderRadius: 10,
+        height: 32,
+        justifyContent: 'center',
+        width: 32,
+    },
+    accordionTitleContainer: {
+        flex: 1,
+    },
+    accordionSub: {
+        color: Theme.color.COLOR_PRIMARY_GREEN,
+        letterSpacing: 0.8,
+    },
+    accordionTitle: {
+        color: Theme.color.COLOR_INK,
+        marginTop: 1,
+    },
+    accordionContent: {
+        borderTopColor: Theme.color.COLOR_BORDER,
         borderTopWidth: 1,
-        borderTopColor: 'rgba(0, 0, 0, 0.1)',
+        paddingBottom: width(4.5),
+        paddingHorizontal: width(4.5),
+        paddingTop: 14,
     },
     reasoningText: {
-        color: Theme.color.COLOR_TEXT,
-        lineHeight: 22,
-        marginLeft: 8,
-        flex: 1,
-    },
-    ingredientsStatusContainer: {
-        marginTop: height(1),
-    },
-    sectionHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: height(2),
-    },
-    ingredientsStatusTitle: {
-        color: Theme.color.COLOR_TEXT,
-        marginLeft: 8,
-        flex: 1,
-    },
-    badge: {
-        backgroundColor: Theme.color.COLOR_BLUE,
-        borderRadius: 12,
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-    },
-    badgeText: {
-        color: Theme.color.COLOR_WHITE,
-    },
-    ingredientStatusCard: {
-        backgroundColor: Theme.color.COLOR_WHITE,
-        borderRadius: 16,
-        padding: width(4.8),
-        marginBottom: height(1.5),
-        borderLeftWidth: 4,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 6,
-        elevation: 3,
-    },
-    ingredientStatusHeader: {
-        marginBottom: height(1.5),
-    },
-    ingredientNameContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-    },
-    ingredientStatusBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderRadius: 8,
-        marginRight: 10,
-        marginBottom: 8,
-    },
-    ingredientStatusBadgeText: {
-        fontSize: 11,
-        letterSpacing: 0.5,
-        marginLeft: 4,
-    },
-    ingredientStatusName: {
-        color: Theme.color.COLOR_TEXT,
-        flex: 1,
-        lineHeight: 24,
-    },
-    noteContainer: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        paddingTop: height(1.5),
-        borderTopWidth: 1,
-        borderTopColor: '#F0F0F0',
-    },
-    ingredientReasonText: {
-        color: Theme.color.COLOT_SUBTEXT,
+        color: Theme.color.COLOR_MUTED,
         lineHeight: 20,
-        marginLeft: 8,
-        flex: 1,
     },
-    actionsContainer: {
-        marginTop: height(3),
+    infoBadgeRow: {
+        alignItems: 'flex-start',
+        backgroundColor: Theme.color.COLOR_BG,
+        borderColor: Theme.color.COLOR_BORDER,
+        borderRadius: 12,
+        borderWidth: 1,
+        flexDirection: 'row',
+        gap: 8,
+        marginTop: 14,
+        padding: 10,
+    },
+    infoBadgeText: {
+        color: Theme.color.COLOR_MUTED,
+        flex: 1,
+        lineHeight: 15,
+    },
+    ingredientsListWrapper: {
         marginBottom: height(2.5),
     },
-    primaryButton: {
+    sectionHeader: {
+        alignItems: 'baseline',
         flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: height(1.2),
+        paddingHorizontal: 4,
+    },
+    ingredientsStatusTitle: {
+        color: Theme.color.COLOR_INK,
+    },
+    badge: {
+        backgroundColor: 'transparent',
+    },
+    badgeText: {
+        color: Theme.color.COLOR_MUTED,
+    },
+    breakdownCardContainer: {
+        backgroundColor: Theme.color.COLOR_WHITE,
+        borderColor: Theme.color.COLOR_BORDER,
+        borderRadius: 24,
+        borderWidth: 1,
+        overflow: 'hidden',
+    },
+    breakdownItemRow: {
+        paddingHorizontal: width(4),
+    },
+    breakdownRowBorder: {
+        borderBottomColor: Theme.color.COLOR_BORDER,
+        borderBottomWidth: 1,
+    },
+    breakdownItemHeader: {
         alignItems: 'center',
+        flexDirection: 'row',
+        paddingVertical: 14,
+    },
+    indicatorDotContainer: {
+        alignItems: 'center',
+        borderRadius: 7,
+        borderWidth: 3,
+        height: 14,
         justifyContent: 'center',
-        backgroundColor: Theme.color.COLOR_BLUE,
-        borderRadius: 16,
-        paddingVertical: height(2.2),
-        paddingHorizontal: width(8.5),
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-        elevation: 5,
+        marginRight: 10,
+        width: 14,
+    },
+    indicatorDot: {
+        borderRadius: 3,
+        height: 6,
+        width: 6,
+    },
+    breakdownItemNameContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        marginRight: 6,
+    },
+    ingredientName: {
+        lineHeight: 18,
+    },
+    ingredientNotePreview: {
+        color: Theme.color.COLOR_MUTED_2,
+        marginTop: 1,
+    },
+    ingredientStatusBadge: {
+        borderRadius: 12,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+    },
+    ingredientStatusBadgeText: {
+        letterSpacing: 0.5,
+    },
+    breakdownItemNoteExpanded: {
+        borderTopColor: '#FAFAFA',
+        borderTopWidth: 1,
+        paddingBottom: 14,
+        paddingHorizontal: width(6),
+        paddingTop: 10,
+    },
+    ingredientNoteFull: {
+        color: Theme.color.COLOR_MUTED,
+        lineHeight: 16,
+    },
+    improveButtonOutline: {
+        alignItems: 'center',
+        backgroundColor: Theme.color.COLOR_WHITE,
+        borderColor: Theme.color.COLOR_PRIMARY_GREEN,
+        borderRadius: 20,
+        borderStyle: 'dashed',
+        borderWidth: 1.5,
+        flexDirection: 'row',
+        gap: 12,
+        marginTop: height(1),
+        padding: 16,
+    },
+    improveButtonIconContainer: {
+        alignItems: 'center',
+        backgroundColor: Theme.color.COLOR_PRIMARY_GREEN_BG,
+        borderRadius: 12,
+        height: 36,
+        justifyContent: 'center',
+        width: 36,
+    },
+    improveButtonText: {
+        color: Theme.color.COLOR_INK,
+    },
+    improveButtonSub: {
+        color: Theme.color.COLOR_MUTED,
+        marginTop: 2,
+    },
+    actionsContainer: {
+        marginTop: height(2),
+    },
+    primaryButton: {
+        alignItems: 'center',
+        backgroundColor: Theme.color.COLOR_PRIMARY_GREEN,
+        borderRadius: 18,
+        flexDirection: 'row',
+        gap: 8,
+        justifyContent: 'center',
+        paddingVertical: height(2),
     },
     buttonIcon: {
-        marginRight: 8,
+        marginRight: 2,
     },
     primaryButtonText: {
         color: Theme.color.COLOR_WHITE,
     },
-    // Modal Styles
+    // Modal / Bottom Sheet Styles
     modalOverlay: {
+        backgroundColor: 'rgba(0, 0, 0, 0.75)',
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
         justifyContent: 'flex-end',
     },
     modalContent: {
-        backgroundColor: Theme.color.COLOR_WHITE,
-        borderTopLeftRadius: 30,
-        borderTopRightRadius: 30,
-        padding: width(6.4),
-        paddingBottom: Platform.OS === 'ios' ? height(5) : height(3),
-        maxHeight: height(85),
+        backgroundColor: '#074330', // Dark Emerald background matching login/signup
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        padding: width(6),
+        paddingBottom: Platform.OS === 'ios' ? height(5) : height(3.5),
+        maxHeight: height(80),
+    },
+    modalNotch: {
+        alignSelf: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.25)',
+        borderRadius: 2,
+        height: 4,
+        marginBottom: 15,
+        width: 40,
     },
     modalHeader: {
-        flexDirection: 'row',
         alignItems: 'center',
+        flexDirection: 'row',
+        gap: 12,
         marginBottom: height(2.5),
     },
     modalIconContainer: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        backgroundColor: '#EBF5FF',
-        justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 15,
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        borderColor: 'rgba(255, 255, 255, 0.15)',
+        borderRadius: 14,
+        borderWidth: 1,
+        height: 44,
+        justifyContent: 'center',
+        width: 44,
     },
     modalTitle: {
-        color: Theme.color.COLOR_TEXT,
-        marginBottom: 2,
+        color: Theme.color.COLOR_WHITE,
+        marginBottom: 1,
     },
     modalSubTitle: {
-        color: Theme.color.COLOR_BLUE,
-        fontFamily: Theme.fonts.FONT_NUNITO_EXTRABOLD,
+        color: '#A8DCC1',
+        letterSpacing: 0.8,
+    },
+    modalCloseIconBtn: {
+        padding: 4,
     },
     modalDescription: {
-        color: Theme.color.COLOT_SUBTEXT,
+        color: 'rgba(255, 255, 255, 0.75)',
         lineHeight: 18,
         marginBottom: height(2.5),
     },
     specificImageSection: {
-        marginBottom: height(2),
+        marginBottom: height(1.5),
     },
     specificImageRow: {
-        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: '#F9FAFB',
-        padding: 12,
-        borderRadius: 16,
-        marginBottom: 12,
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        borderColor: 'rgba(255, 255, 255, 0.08)',
+        borderRadius: 18,
         borderWidth: 1,
-        borderColor: '#F3F4F6',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 12,
+        padding: 14,
     },
     specificImageRowActive: {
-        borderColor: '#DBEAFE',
-        backgroundColor: '#F0F9FF',
+        backgroundColor: 'rgba(168, 220, 193, 0.1)',
+        borderColor: 'rgba(168, 220, 193, 0.4)',
     },
     fieldLabel: {
-        color: Theme.color.COLOR_TEXT,
-        marginBottom: 2,
+        color: Theme.color.COLOR_WHITE,
+        marginBottom: 1,
     },
     fieldSubLabel: {
-        color: Theme.color.COLOT_SUBTEXT,
+        color: 'rgba(255, 255, 255, 0.55)',
     },
     captureButton: {
-        width: 50,
-        height: 50,
-        borderRadius: 12,
-        backgroundColor: '#EFF6FF',
-        justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        borderColor: 'rgba(255, 255, 255, 0.15)',
+        borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#DBEAFE',
+        height: 46,
+        justifyContent: 'center',
+        width: 46,
     },
     captureButtonActive: {
-        padding: 0,
         overflow: 'hidden',
+        padding: 0,
     },
     previewThumbnail: {
-        width: '100%',
         height: '100%',
+        width: '100%',
     },
     additionalImagesSection: {
+        marginBottom: height(2.5),
         marginTop: height(1),
-        marginBottom: height(2),
     },
     additionalImagesGrid: {
         flexDirection: 'row',
@@ -1005,60 +1311,56 @@ const styles = StyleSheet.create({
         gap: width(3),
     },
     additionalImageWrapper: {
-        width: width(25),
+        borderRadius: 14,
         height: width(25),
-        borderRadius: 12,
         position: 'relative',
+        width: width(25),
     },
     additionalImage: {
-        width: '100%',
-        height: '100%',
-        borderRadius: 12,
+        borderColor: 'rgba(255,255,255,0.15)',
+        borderRadius: 14,
         borderWidth: 1,
-        borderColor: '#E5E5E5',
+        height: '100%',
+        width: '100%',
     },
     removeImageButton: {
-        position: 'absolute',
-        top: -5,
-        right: -5,
         backgroundColor: Theme.color.COLOR_WHITE,
-        borderRadius: 10,
+        borderRadius: 11,
+        position: 'absolute',
+        right: -6,
+        top: -6,
     },
     addImageButton: {
-        width: width(25),
-        height: width(25),
-        borderRadius: 12,
-        borderWidth: 2,
-        borderStyle: 'dashed',
-        borderColor: '#D1D5DB',
-        justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#F9FAFB',
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        borderColor: 'rgba(255, 255, 255, 0.3)',
+        borderRadius: 14,
+        borderStyle: 'dashed',
+        borderWidth: 1.5,
+        height: width(25),
+        justifyContent: 'center',
+        width: width(25),
     },
     modalFooter: {
-        marginTop: height(2),
+        gap: 6,
+        marginTop: height(1.5),
     },
     modalSubmitButton: {
-        backgroundColor: Theme.color.COLOR_BLUE,
-        borderRadius: 16,
-        paddingVertical: height(2),
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
+        backgroundColor: Theme.color.COLOR_WHITE,
+        borderRadius: 18,
+        justifyContent: 'center',
+        paddingVertical: height(1.8),
     },
     modalSubmitText: {
-        color: Theme.color.COLOR_WHITE,
+        color: '#074330',
     },
     modalCloseButton: {
-        paddingVertical: height(1.5),
         alignItems: 'center',
-        marginTop: height(1),
+        paddingVertical: height(1.2),
     },
     modalCloseText: {
-        color: Theme.color.COLOT_SUBTEXT,
+        color: 'rgba(255, 255, 255, 0.65)',
         textDecorationLine: 'underline',
     },
 });

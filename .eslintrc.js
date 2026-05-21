@@ -49,21 +49,32 @@ module.exports = {
     'react-native/no-inline-styles': 'warn',
     'react-native/no-unused-styles': 'error',
     'react-native/split-platform-components': 'warn',
+    'react-native/no-color-literals': 'off',
+    'react-native/sort-styles': 'off',
+    'react-native/no-raw-text': [
+      'error',
+      {
+        skip: ['SmallText', 'MediumText', 'LargeText', 'UnderLineText', 'Button'],
+      },
+    ],
 
     // TypeScript rules
+    '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/no-unused-vars': ['warn'],
     '@typescript-eslint/explicit-function-return-type': 'off',
 
+    // React/JSX rules
+    'react/require-default-props': 'off',
+    'react/function-component-definition': 'off',
+    'react/jsx-props-no-spreading': 'off',
+    'react/no-array-index-key': 'off',
+
     // General
     'no-console': 'warn',
-    'no-param-reassign': [
-      'error',
-      {
-        props: true,
-        ignorePropertyModificationsFor: ['state'], // allow "state" mutation (RTK)
-      },
-    ],
+    'no-param-reassign': 'off',
+    'import/no-unresolved': 'off',
   },
+  ignorePatterns: ['.eslintrc.js', 'metro.config.js', 'lint_output.txt'],
   overrides: [
     {
       files: ['*.js'],

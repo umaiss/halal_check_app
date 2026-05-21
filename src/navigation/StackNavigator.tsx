@@ -1,14 +1,14 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
 import { RootStackParamList } from './types/RootParamList';
 import BottomTabNavigator from './BottomTabNavigator';
 import { Settings, IngredientsResult, Onboarding, Scan, Login, Signup, Upload } from '../screens';
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
-
-import { useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 // Props passed from App.tsx
 interface StackNavigatorProps {

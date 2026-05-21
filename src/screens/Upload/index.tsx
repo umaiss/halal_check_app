@@ -13,12 +13,12 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { launchImageLibrary, launchCamera, Asset } from 'react-native-image-picker';
 import TextRecognition from '@react-native-ml-kit/text-recognition';
 import Icon from 'react-native-vector-icons/Ionicons';
+import CryptoJS from 'crypto-js';
 import { RootStackParamList } from '../../navigation/types/RootParamList';
 import { SmallText } from '../../components/text';
 import Theme from '../../theme/theme';
 import { styles } from './styles';
 import { uploadImageToSupabase } from '../../utils/imageUpload';
-import CryptoJS from 'crypto-js';
 import Input from '../../components/input';
 import { height } from '../../utils/dimensions';
 
@@ -26,7 +26,7 @@ type UploadScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 
 
 type ImageType = 'front' | 'back' | 'ingredients';
 
-const Upload = () => {
+function Upload() {
     const navigation = useNavigation<UploadScreenNavigationProp>();
     const [frontImage, setFrontImage] = useState<Asset | null>(null);
     const [backImage, setBackImage] = useState<Asset | null>(null);
@@ -285,6 +285,6 @@ const Upload = () => {
             </View>
         </View>
     );
-};
+}
 
 export default Upload;
