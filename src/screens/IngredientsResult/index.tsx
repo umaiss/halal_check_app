@@ -11,7 +11,7 @@ import { useHalalCheckMutation, useImproveCheckMutation } from '../../redux/scan
 import { HalalCheckResponse } from '../../redux/services/types';
 import { scanHistoryStorage } from '../../utils/scanHistoryStorage';
 import { height, width } from '../../utils/dimensions';
-import { uploadImageToSupabase } from '../../utils/imageUpload';
+import { uploadImageToBackend } from '../../utils/imageUpload';
 
 type IngredientsResultRouteProp = RouteProp<RootStackParamList, 'IngredientsResult'>;
 type IngredientsResultNavigationProp = NativeStackNavigationProp<RootStackParamList, 'IngredientsResult'>;
@@ -227,21 +227,21 @@ function IngredientsResult() {
 
             if (barcodeImage) {
                 uploadPromises.push(
-                    uploadImageToSupabase(barcodeImage, 'improvement-images', productName)
+                    uploadImageToBackend(barcodeImage, productName)
                         .then(url => { if (url) improvementData.barcode_image = url; })
                 );
             }
 
             if (manufacturerImage) {
                 uploadPromises.push(
-                    uploadImageToSupabase(manufacturerImage, 'improvement-images', productName)
+                    uploadImageToBackend(manufacturerImage, productName)
                         .then(url => { if (url) improvementData.manufacturer_image = url; })
                 );
             }
 
             if (additionalImages.length > 0) {
                 const additionalPromises = additionalImages.map((uri) => 
-                    uploadImageToSupabase(uri, 'improvement-images', productName)
+                    uploadImageToBackend(uri, productName)
                 );
                 uploadPromises.push(
                     Promise.all(additionalPromises)

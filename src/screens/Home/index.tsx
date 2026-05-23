@@ -21,7 +21,7 @@ import { RootStackParamList, BottomTabParamList } from '../../navigation/types/R
 import { RootState } from '../../redux/store';
 import { useGetHistoryQuery } from '../../redux/scanApi/scanApi';
 import { ScanHistoryItem } from '../../redux/slices/scanHistory/types';
-import { uploadImageToSupabase } from '../../utils/imageUpload';
+import { uploadImageToBackend } from '../../utils/imageUpload';
 import Theme from '../../theme/theme';
 import { SmallText, MediumText, LargeText } from '../../components/text';
 import Input from '../../components/input';
@@ -176,15 +176,10 @@ function Home() {
         try {
             const safeUpload = async (uri: string | undefined): Promise<string> => {
                 if (!uri) return '';
-                try {
-                    return await uploadImageToSupabase(uri, 'halal-images', productName);
-                } catch (e) {
-                    console.error('Failed to upload image:', e);
-                    return '';
-                }
+                    return await uploadImageToBackend(uri, productName);
             };
 
-            // Concurrent uploads to Supabase
+            // Concurrent uploads to S3 via backend
             const frontUploadPromise = safeUpload(photos.front);
             const backUploadPromise = safeUpload(photos.back);
             const ingredientsUploadPromise = safeUpload(photos.ingredients);

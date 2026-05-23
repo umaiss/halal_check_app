@@ -18,18 +18,74 @@ target 'react_native_boilerPlate' do
   )
 
   post_install do |installer|
-    installer.pods_project.targets.each do |target|
-      target.build_configurations.each do |config|
-        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
-        config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = "arm64"
-        config.build_settings["ONLY_ACTIVE_ARCH"] = "YES"
-      end
-    end
-
     react_native_post_install(
       installer,
       config[:reactNativePath],
       :mac_catalyst_enabled => false,
     )
+
+    # Set deployment targets and active arch, and clear any EXCLUDED_ARCHS from Pod targets
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
+        config.build_settings["ONLY_ACTIVE_ARCH"] = "YES"
+        config.build_settings.delete('EXCLUDED_ARCHS')
+        config.build_settings.delete('EXCLUDED_ARCHS[sdk=iphonesimulator*]')
+      end
+    end
+
+    # Clear EXCLUDED_ARCHS from Pods project configuration
+    installer.pods_project.build_configurations.each do |config|
+      config.build_settings.delete('EXCLUDED_ARCHS')
+      config.build_settings.delete('EXCLUDED_ARCHS[sdk=iphonesimulator*]')
+    end
+
+    # Clear EXCLUDED_ARCHS from main project targets to restore native simulator listing
+    require 'xcodeproj'
+    project_path = File.join(__dir__, 'react_native_boilerPlate.xcodeproj')
+    project = Xcodeproj::Project.open(project_path)
+    project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings.delete('EXCLUDED_ARCHS')
+        config.build_settings.delete('EXCLUDED_ARCHS[sdk=iphonesimulator*]')
+      end
+    end
+    project.save
+
+    # Clean up EXCLUDED_ARCHS from all generated xcconfig files
+    Dir.glob("Pods/Target Support Files/**/*.xcconfig").each do |xcconfig_path|
+      xcconfig = File.read(xcconfig_path)
+      new_xcconfig = xcconfig.gsub(/^EXCLUDED_ARCHS.*$/, "")
+      File.open(xcconfig_path, "w") { |file| file << new_xcconfig }
+    end
+
+    # -----------------------------------------------------------------------
+    # Patch ALL MLKit/MLImage arm64 slices: change LC_BUILD_VERSION platform
+    # from iOS (2) to iOS Simulator (7) so arm64 simulator builds link cleanly.
+    # Handles both ar archives and raw Mach-O object framework binaries.
+    # Script is idempotent — safe to run on every `pod install`.
+    # -----------------------------------------------------------------------
+    patch_script_src = File.join(__dir__, 'patch_mlimage', 'patch_all_mlkit.py')
+    if File.exist?(patch_script_src)
+      pods_root = installer.sandbox.root.to_s
+      system("python3 \"#{patch_script_src}\" \"#{pods_root}\"")
+    end
+
+    # Apply Xcode 26 workaround for fmt library if it exists
+    fmt_base = File.join(installer.sandbox.root, 'fmt', 'include', 'fmt', 'base.h')
+    if File.exist?(fmt_base)
+      content = File.read(fmt_base)
+      unless content.include?('Xcode 26 workaround')
+        patched = content.gsub(
+          /^(#elif defined\(__cpp_consteval\)\n#  define FMT_USE_CONSTEVAL) 1/,
+          "// Xcode 26 workaround: disable consteval\n\\1 0"
+        )
+        if patched != content
+          File.chmod(0644, fmt_base)
+          File.write(fmt_base, patched)
+        end
+      end
+    end
   end
 end
+

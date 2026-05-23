@@ -18,7 +18,7 @@ import { RootStackParamList } from '../../navigation/types/RootParamList';
 import { SmallText } from '../../components/text';
 import Theme from '../../theme/theme';
 import { styles } from './styles';
-import { uploadImageToSupabase } from '../../utils/imageUpload';
+import { uploadImageToBackend } from '../../utils/imageUpload';
 import Input from '../../components/input';
 import { height } from '../../utils/dimensions';
 
@@ -129,12 +129,7 @@ function Upload() {
             // Helper to handle safe upload
             const safeUpload = async (uri: string | undefined): Promise<string> => {
                 if (!uri) return '';
-                try {
-                    return await uploadImageToSupabase(uri, 'halal-images', productName);
-                } catch (e) {
-                    console.error('Failed to upload image:', e);
-                    return ''; // Default to empty string on failure instead of crashing the whole flow
-                }
+                    return await uploadImageToBackend(uri, productName);
             };
 
             // Queue up uploads concurrently

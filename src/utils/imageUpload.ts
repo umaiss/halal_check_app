@@ -1,50 +1,58 @@
-import { decode } from 'base64-arraybuffer';
-import * as RNFS from 'react-native-fs';
 import { Platform } from 'react-native';
-import { supabase } from './supabase';
+import axiosInstance from '../api/axiosBase';
+import { API_ENDPOINTS } from './constant';
 
-export const uploadImageToSupabase = async (uri: string, folder?: string, productName?: string) => {
+/**
+ * Upload a single image to S3 via the backend endpoint.
+ * Uses native multipart/form-data — no base64 conversion needed.
+ *
+ * S3 key structure: product-images/{productName}/{timestamp}_{filename}
+ *
+ * @param uri          Local file URI of the image (e.g. file:///...)
+ * @param productName  Product name used as the S3 sub-folder (optional)
+ * @returns            Public S3 URL of the uploaded image
+ */
+export const uploadImageToBackend = async (uri: string, productName?: string): Promise<string> => {
     try {
-        const fileName = `${Date.now()}-${uri.split('/').pop()}`;
+        const fileName = uri.split('/').pop() || `image_${Date.now()}.jpg`;
 
-        const activeFolder = folder ?? 'halal-images';
-        let pathFolder = activeFolder;
-        const cleanProductName = productName
-            ? productName.toLowerCase().trim().replace(/[^a-z0-9-_]/g, '_').replace(/_+/g, '_')
-            : 'unnamed_product';
+        // Ensure correct URI format for each platform
+        const fileUri = uri.startsWith('file://') ? uri : `file://${uri}`;
 
-        if (activeFolder === 'halal-images') {
-            // Organize standard scans under a dedicated scan-product-images folder
-            pathFolder = `scan-product-images/${cleanProductName}`;
-        } else {
-            // For other folders (like 'improvement-images'), nest under it
-            pathFolder = `${activeFolder}/${cleanProductName}`;
+        const formData = new FormData();
+        formData.append('images', {
+            uri: fileUri,
+            type: 'image/jpeg',
+            name: fileName,
+        } as any);
+
+        // Send productName so the backend can nest it under product-images/{productName}/
+        if (productName && productName.trim().length > 0) {
+            formData.append('productName', productName.trim());
         }
 
-        const filePath = `${pathFolder}/${fileName}`;
+        const response = await axiosInstance.post(
+            API_ENDPOINTS.UPLOAD_IMAGES,
+            formData,
+            {
+                headers: {
+                    // Do NOT set Content-Type manually — React Native's XHR will
+                    // set it as 'multipart/form-data; boundary=--XXX' automatically.
+                    // Manually setting it strips the boundary and causes a network error.
+                    'Content-Type': undefined,
+                },
+                timeout: 60000, // Images take longer than regular API calls
+            }
+        );
 
-        // Read file as base64
-        const base64 = await RNFS.readFile(uri, 'base64');
-        const arrayBuffer = decode(base64);
-
-        const { data, error } = await supabase.storage
-            .from('halal-images')
-            .upload(filePath, arrayBuffer, {
-                contentType: 'image/jpeg'
-            });
-
-        if (error) {
-            console.error('Supabase upload error:', error);
-            throw error;
+        const urls: string[] = response.data?.urls;
+        if (!urls || urls.length === 0) {
+            throw new Error('No URL returned from upload endpoint.');
         }
 
-        const { data: { publicUrl } } = supabase.storage
-            .from('halal-images')
-            .getPublicUrl(filePath);
-
-        return publicUrl;
+        return urls[0];
     } catch (error) {
-        console.error('Error in uploadImageToSupabase:', error);
+        console.error('Error in uploadImageToBackend:', error);
         throw error;
     }
 };

@@ -76,3 +76,12 @@ buck-out/
 !.yarn/sdks
 !.yarn/versions
 .cxx
+
+# ios/patch_mlimage — compiled binary artifacts (build outputs, not source)
+ios/patch_mlimage/*.o
+ios/patch_mlimage/*.arm64
+ios/patch_mlimage/*.arm64.patched
+ios/patch_mlimage/*.fat
+ios/patch_mlimage/*.x86_64
+ios/patch_mlimage/__.SYMDEF
+ios/patch_mlimage/__.SYMDEF SORTED
