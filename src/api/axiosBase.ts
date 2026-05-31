@@ -21,6 +21,11 @@ axiosInstance.interceptors.request.use(
             config.headers.Authorization = `Bearer ${token}`;
         }
 
+        // If data is FormData, delete the Content-Type header to let native XHR set it with the correct boundary
+        if (config.data instanceof FormData && config.headers) {
+            delete config.headers['Content-Type'];
+        }
+
         // Log request details for debugging
         console.log('🚀 Axios Request:', {
             url: config.url,
@@ -77,7 +82,13 @@ axiosInstance.interceptors.response.use(
         });
 
         // Check if error is 401 and we haven't retried this request yet
-        if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+        // Do not attempt token refresh for login, signup, google, or apple auth endpoints.
+        const isAuthEndpoint = originalRequest.url?.includes('auth/login') ||
+                               originalRequest.url?.includes('auth/signup') ||
+                               originalRequest.url?.includes('auth/google') ||
+                               originalRequest.url?.includes('auth/apple');
+
+        if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthEndpoint) {
             
             // If the 401 happened on the refresh endpoint itself, do not retry
             if (originalRequest.url?.includes('auth/refresh')) {

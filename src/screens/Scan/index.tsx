@@ -41,6 +41,21 @@ function Scan() {
     const device = useCameraDevice('back');
     const cameraRef = useRef<Camera>(null);
 
+    // Find format with lower photo resolution to keep file sizes small (under Nginx limits)
+    // and speed up uploads, while remaining fully readable for Text Recognition.
+    const format = React.useMemo(() => {
+        if (!device?.formats) return undefined;
+        
+        // Filter formats that support photo capture and have valid photo dimensions
+        const photoFormats = device.formats.filter(f => f.photoWidth && f.photoHeight);
+        
+        // Find a format close to 1080p (e.g. photoWidth between 1080 and 1920)
+        // so that text recognition remains highly accurate, but file size is kept under 1MB.
+        const idealFormat = photoFormats.find(f => f.photoWidth >= 1080 && f.photoWidth <= 1920);
+        
+        return idealFormat || photoFormats.find(f => f.photoWidth <= 1280) || device.formats[0];
+    }, [device]);
+
     const [isProcessing, setIsProcessing] = useState(false);
     const [flashMode, setFlashMode] = useState<'on' | 'off'>('off');
     const [isShutterPressed, setIsShutterPressed] = useState(false);
@@ -180,6 +195,7 @@ function Scan() {
                     ref={cameraRef}
                     style={StyleSheet.absoluteFill}
                     device={device}
+                    format={format}
                     isActive={true}
                     photo={true}
                 />
