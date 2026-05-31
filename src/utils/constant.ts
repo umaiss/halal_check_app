@@ -18,4 +18,6 @@ export const API_ENDPOINTS = {
     HALAL_CHECK: "api/check-halal",
     UPLOAD_IMAGES: "api/check-halal/upload-image",
     HISTORY: "api/check-halal/history",
+    FORGOT_PASSWORD: "api/auth/forgot-password",
+    RESET_PASSWORD: "api/auth/reset-password",
 };

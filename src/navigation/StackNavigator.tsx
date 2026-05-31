@@ -4,7 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { RootStackParamList } from './types/RootParamList';
 import BottomTabNavigator from './BottomTabNavigator';
-import { Settings, IngredientsResult, Onboarding, Scan, Login, Signup, Upload } from '../screens';
+import { Settings, IngredientsResult, Onboarding, Scan, Login, Signup, Upload, ForgotPassword, ResetPassword } from '../screens';
 
 import { RootState } from '../redux/store';
 
@@ -80,7 +80,16 @@ function StackNavigator({ isOnboardingCompleted }: StackNavigatorProps) {
                             component={Signup}
                             options={{ headerShown: false }}
                         />
-
+                        <Stack.Screen
+                            name="ForgotPassword"
+                            component={ForgotPassword}
+                            options={{ headerShown: false }}
+                        />
+                        <Stack.Screen
+                            name="ResetPassword"
+                            component={ResetPassword}
+                            options={{ headerShown: false }}
+                        />
                     </>
                 )}
             </Stack.Navigator>

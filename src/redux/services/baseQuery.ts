@@ -1,7 +1,7 @@
 import { BaseQueryFn } from "@reduxjs/toolkit/query";
 import { AxiosRequestConfig, AxiosError, AxiosHeaders } from "axios";
 import axiosInstance from "../../api/axiosBase";
-import { RootState } from "../store";
+import type { RootState } from "../store";
 
 export const axiosBaseQuery =
     ({ baseUrl }: { baseUrl?: string } = { baseUrl: "" }): BaseQueryFn<

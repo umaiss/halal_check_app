@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { ScanHistoryItem, ScanHistoryState } from './types';
-import { RootState } from '../../store';
+import type { RootState } from '../../store';
 
 const initialState: ScanHistoryState = {
     items: [],

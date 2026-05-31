@@ -34,6 +34,8 @@ export type RootStackParamList = {
     Login: undefined;
     Signup: undefined;
     Upload: undefined;
+    ForgotPassword: undefined;
+    ResetPassword: { email: string };
 };
 
 export type BottomTabParamList = {

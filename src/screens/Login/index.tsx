@@ -167,7 +167,7 @@ function Login() {
                         </View>
 
                         <View style={styles.forgotPasswordContainer}>
-                            <TouchableOpacity onPress={() => Alert.alert('Forgot Password', 'Reset password flow')}>
+                            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
                                 <SmallText textStyles={styles.forgotPasswordText}>Forgot Password?</SmallText>
                             </TouchableOpacity>
                         </View>
