@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, SafeAreaView, StatusBar, Alert, ScrollView } from 'react-native';
+import { View, TouchableOpacity, SafeAreaView, StatusBar, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -10,13 +10,16 @@ import { Input, Button, LargeText, SmallText } from '../../components';
 import Theme from '../../theme/theme';
 import styles from './styles';
 import { setCredentials } from '../../redux/slices/auth/authSlice';
-import { useLoginMutation } from '../../redux/authApi/authApi';
+import { useLoginMutation, useGoogleLoginMutation, useAppleLoginMutation } from '../../redux/authApi/authApi';
 import ASYNC_KEYS from '../../utils/async-keys';
+import { signInWithGoogle, signInWithApple } from '../../utils';
 
 function Login() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const dispatch = useDispatch();
     const [login, { isLoading }] = useLoginMutation();
+    const [googleLogin, { isLoading: isGoogleLoading }] = useGoogleLoginMutation();
+    const [appleLogin, { isLoading: isAppleLoading }] = useAppleLoginMutation();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -49,28 +52,31 @@ function Login() {
         return valid;
     };
 
+    const handleAuthSuccess = async (response: any) => {
+        if (response?.access_token && response?.user) {
+            await AsyncStorage.setItem(ASYNC_KEYS.USER_TOKEN, response.access_token);
+            if (response.refresh_token) {
+                await AsyncStorage.setItem(ASYNC_KEYS.USER_REFRESH_TOKEN, response.refresh_token);
+            }
+            await AsyncStorage.setItem("UserInfo", JSON.stringify(response.user));
+
+            dispatch(setCredentials({
+                token: response.access_token,
+                refreshToken: response.refresh_token || null,
+                user: response.user
+            }));
+        } else {
+            Alert.alert('Login Failed', 'Invalid response from server');
+        }
+    };
+
     const handleLogin = async () => {
         if (validate()) {
             try {
                 console.log('Login Request:', { email, password });
                 const response = await login({ email, password }).unwrap();
                 console.log('Login Success:', response);
-
-                if (response?.access_token && response?.user) {
-                    await AsyncStorage.setItem(ASYNC_KEYS.USER_TOKEN, response.access_token);
-                    if (response.refresh_token) {
-                        await AsyncStorage.setItem(ASYNC_KEYS.USER_REFRESH_TOKEN, response.refresh_token);
-                    }
-                    await AsyncStorage.setItem("UserInfo", JSON.stringify(response.user));
-
-                    dispatch(setCredentials({
-                        token: response.access_token,
-                        refreshToken: response.refresh_token || null,
-                        user: response.user
-                    }));
-                } else {
-                    Alert.alert('Login Failed', 'Invalid response from server');
-                }
+                await handleAuthSuccess(response);
             } catch (err: any) {
                 console.error("Login Error", err);
                 const errorMessage = err?.data?.message || err?.data?.error || 'Something went wrong. Please try again.';
@@ -79,8 +85,33 @@ function Login() {
         }
     };
 
-    const handleSocialLogin = (platform: string) => {
-        Alert.alert(`${platform} Login`, `Proceed with ${platform} login logic.`);
+    const handleSocialLogin = async (platform: string) => {
+        try {
+            if (platform === 'Google') {
+                const { idToken } = await signInWithGoogle();
+                console.log('Google Sign-In Success: Got ID Token');
+                const response = await googleLogin({ idToken }).unwrap();
+                await handleAuthSuccess(response);
+            } else if (platform === 'Apple') {
+                const { identityToken, name, email } = await signInWithApple();
+                console.log('Apple Sign-In Success: Got Identity Token');
+                const response = await appleLogin({ identityToken, name, email }).unwrap();
+                await handleAuthSuccess(response);
+            }
+        } catch (err: any) {
+            console.error(`${platform} Login Error:`, err);
+            // Ignore if user cancelled
+            const isCancelled = 
+                err?.message?.includes('Sign in action cancelled') || 
+                err?.code === 'SIGN_IN_CANCELLED' || 
+                err?.code === '1' ||
+                err?.message?.includes('user canceled');
+            if (isCancelled) {
+                return;
+            }
+            const errorMessage = err?.data?.message || err?.data?.error || err?.message || 'Authentication failed. Please try again.';
+            Alert.alert(`${platform} Sign-In Failed`, errorMessage);
+        }
     };
 
     return (
@@ -156,11 +187,27 @@ function Login() {
                         <View style={styles.socialLoginContainer}>
                             <SmallText textStyles={styles.socialDividerText} size={3.2}>Or connect with</SmallText>
                             <View style={styles.socialButtonsRow}>
-                                <TouchableOpacity style={styles.socialButton} onPress={() => handleSocialLogin('Google')}>
-                                    <Ionicons name="logo-google" size={22} color="#FFFFFF" />
+                                <TouchableOpacity 
+                                    style={styles.socialButton} 
+                                    onPress={() => handleSocialLogin('Google')}
+                                    disabled={isLoading || isGoogleLoading || isAppleLoading}
+                                >
+                                    {isGoogleLoading ? (
+                                        <ActivityIndicator size="small" color="#FFFFFF" />
+                                    ) : (
+                                        <Ionicons name="logo-google" size={22} color="#FFFFFF" />
+                                    )}
                                 </TouchableOpacity>
-                                <TouchableOpacity style={styles.socialButton} onPress={() => handleSocialLogin('Apple')}>
-                                    <Ionicons name="logo-apple" size={22} color="#FFFFFF" />
+                                <TouchableOpacity 
+                                    style={styles.socialButton} 
+                                    onPress={() => handleSocialLogin('Apple')}
+                                    disabled={isLoading || isGoogleLoading || isAppleLoading}
+                                >
+                                    {isAppleLoading ? (
+                                        <ActivityIndicator size="small" color="#FFFFFF" />
+                                    ) : (
+                                        <Ionicons name="logo-apple" size={22} color="#FFFFFF" />
+                                    )}
                                 </TouchableOpacity>
                             </View>
                         </View>

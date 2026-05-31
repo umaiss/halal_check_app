@@ -1,7 +1,7 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { axiosBaseQuery } from "../services/baseQuery";
 import { LoginRequest, RegisterRequest, AuthResponse } from "../services/types";
-import { API_ENDPOINTS, BASE_URL } from "../../utils/constant";
+import { API_ENDPOINTS } from "../../utils/constant";
 
 export const authApi = createApi({
     reducerPath: "authApi",
@@ -21,7 +21,26 @@ export const authApi = createApi({
                 data: userData,
             }),
         }),
+        googleLogin: builder.mutation<AuthResponse, { idToken: string }>({
+            query: (body) => ({
+                url: "api/auth/google",
+                method: "POST",
+                data: body,
+            }),
+        }),
+        appleLogin: builder.mutation<AuthResponse, { identityToken: string; name?: string; email?: string }>({
+            query: (body) => ({
+                url: "api/auth/apple",
+                method: "POST",
+                data: body,
+            }),
+        }),
     }),
 });
 
-export const { useLoginMutation, useRegisterMutation } = authApi;
+export const {
+    useLoginMutation,
+    useRegisterMutation,
+    useGoogleLoginMutation,
+    useAppleLoginMutation,
+} = authApi;
