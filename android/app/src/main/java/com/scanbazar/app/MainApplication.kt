@@ -1,4 +1,4 @@
-package com.react_native_boilerplate
+package com.scanbazar.app
 
 import android.app.Application
 import com.facebook.react.PackageList

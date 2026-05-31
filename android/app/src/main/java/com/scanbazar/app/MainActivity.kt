@@ -1,4 +1,4 @@
-package com.react_native_boilerplate
+package com.scanbazar.app
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
