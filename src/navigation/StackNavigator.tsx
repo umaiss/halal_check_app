@@ -4,7 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { RootStackParamList } from './types/RootParamList';
 import BottomTabNavigator from './BottomTabNavigator';
-import { Settings, IngredientsResult, Onboarding, Scan, Login, Signup, Upload, ForgotPassword, ResetPassword } from '../screens';
+import { IngredientsResult, Onboarding, Scan, Login, Signup, Upload, ForgotPassword, ResetPassword } from '../screens';
 
 import { RootState } from '../redux/store';
 
@@ -32,11 +32,6 @@ function StackNavigator({ isOnboardingCompleted }: StackNavigatorProps) {
                         <Stack.Screen
                             name="MainTabs"
                             component={BottomTabNavigator}
-                        />
-                        <Stack.Screen
-                            name="Settings"
-                            component={Settings}
-                            options={{ title: 'Settings' }}
                         />
                         <Stack.Screen
                             name="IngredientsResult"

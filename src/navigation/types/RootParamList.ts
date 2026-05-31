@@ -11,7 +11,6 @@ export type RootStackParamList = {
             };
         };
     } | undefined;
-    Settings: undefined;
     IngredientsResult: {
         ingredients: string;
         ingredients_hash: string;

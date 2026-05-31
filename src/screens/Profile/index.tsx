@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, SafeAreaView, ScrollView, TouchableOpacity, Switch, Platform, Alert, StyleSheet } from 'react-native';
+import { View, SafeAreaView, ScrollView, TouchableOpacity, Switch, StyleSheet, Alert } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -19,10 +19,8 @@ function Profile() {
     const { data: apiHistory } = useGetHistoryQuery();
     const scanCount = apiHistory && Array.isArray(apiHistory) ? apiHistory.length : 0;
 
-    // Settings Toggle States
-    const [pushNotifications, setPushNotifications] = useState(true);
+    // Toggle States (Push notifications and Keep Scan History are removed)
     const [darkMode, setDarkMode] = useState(false);
-    const [historySync, setHistorySync] = useState(true);
 
     const handleLogout = () => {
         Alert.alert(
@@ -92,32 +90,14 @@ function Profile() {
                     </View>
                 </View>
 
-                {/* Stats Row */}
+                {/* Stats Row - Only displaying the dynamic scan counter */}
                 <View style={styles.statsRow}>
                     <View style={[styles.statBox, Theme.shadows.sh_card]}>
                         <SmallText textStyles={{ color: Theme.color.COLOR_PRIMARY_GREEN }} size={5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
                             {scanCount}
                         </SmallText>
                         <SmallText textStyles={styles.statLabel} size={2.6} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM}>
-                            Scans
-                        </SmallText>
-                    </View>
-
-                    <View style={[styles.statBox, Theme.shadows.sh_card]}>
-                        <SmallText textStyles={{ color: Theme.color.COLOR_PRIMARY_GREEN }} size={5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
-                            12
-                        </SmallText>
-                        <SmallText textStyles={styles.statLabel} size={2.6} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM}>
-                            Saved
-                        </SmallText>
-                    </View>
-
-                    <View style={[styles.statBox, Theme.shadows.sh_card]}>
-                        <SmallText textStyles={{ color: Theme.color.COLOR_PRIMARY_GREEN }} size={5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
-                            3d
-                        </SmallText>
-                        <SmallText textStyles={styles.statLabel} size={2.6} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM}>
-                            Streak
+                            Total Scans
                         </SmallText>
                     </View>
                 </View>
@@ -128,27 +108,6 @@ function Profile() {
                         PREFERENCES
                     </SmallText>
                     <View style={[styles.groupCard, Theme.shadows.sh_card]}>
-                        {/* Notifications */}
-                        <View style={styles.settingsRow}>
-                            <View style={styles.rowLabelContainer}>
-                                <View style={[styles.iconWrapper, { backgroundColor: '#EBF5FF' }]}>
-                                    <Icon name="notifications-outline" size={18} color="#2563EB" />
-                                </View>
-                                <SmallText textStyles={styles.rowLabel} size={3.4} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
-                                    Push Notifications
-                                </SmallText>
-                            </View>
-                            <Switch
-                                trackColor={{ false: '#D1D5DB', true: '#A8DCC1' }}
-                                thumbColor={pushNotifications ? Theme.color.COLOR_PRIMARY_GREEN : '#F3F4F6'}
-                                ios_backgroundColor="#D1D5DB"
-                                onValueChange={setPushNotifications}
-                                value={pushNotifications}
-                            />
-                        </View>
-
-                        <View style={styles.divider} />
-
                         {/* Dark Mode */}
                         <View style={styles.settingsRow}>
                             <View style={styles.rowLabelContainer}>
@@ -165,27 +124,6 @@ function Profile() {
                                 ios_backgroundColor="#D1D5DB"
                                 onValueChange={setDarkMode}
                                 value={darkMode}
-                            />
-                        </View>
-
-                        <View style={styles.divider} />
-
-                        {/* History Sync */}
-                        <View style={styles.settingsRow}>
-                            <View style={styles.rowLabelContainer}>
-                                <View style={[styles.iconWrapper, { backgroundColor: '#E0F2FE' }]}>
-                                    <Icon name="sync-outline" size={18} color="#0369A1" />
-                                </View>
-                                <SmallText textStyles={styles.rowLabel} size={3.4} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
-                                    Keep Scan History
-                                </SmallText>
-                            </View>
-                            <Switch
-                                trackColor={{ false: '#D1D5DB', true: '#A8DCC1' }}
-                                thumbColor={historySync ? Theme.color.COLOR_PRIMARY_GREEN : '#F3F4F6'}
-                                ios_backgroundColor="#D1D5DB"
-                                onValueChange={setHistorySync}
-                                value={historySync}
                             />
                         </View>
                     </View>

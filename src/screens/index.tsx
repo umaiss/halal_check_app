@@ -1,6 +1,5 @@
 export { default as Home } from './Home'
 export { default as Profile } from './Profile'
-export { default as Settings } from './Settings'
 export { default as IngredientsResult } from './IngredientsResult'
 export { default as Onboarding } from './Onboarding'
 export { default as Scan } from './Scan'
