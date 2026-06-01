@@ -8,6 +8,7 @@ import ASYNC_KEYS from './src/utils/async-keys';
 import Theme from './src/theme/theme';
 
 import { setCredentials } from './src/redux/slices/auth/authSlice';
+import BootSplash from 'react-native-bootsplash';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -43,6 +44,7 @@ function App() {
     } finally {
       console.log('Loading completed');
       setIsLoading(false);
+      BootSplash.hide({ fade: true });
     }
   };
 
