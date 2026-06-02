@@ -27,7 +27,20 @@ export const scanApi = createApi({
                 method: "GET",
             }),
         }),
+        searchProducts: builder.query<any[], string>({
+            query: (searchQuery) => ({
+                url: API_ENDPOINTS.SEARCH_PRODUCTS,
+                method: "GET",
+                params: { q: searchQuery },
+            }),
+        }),
     }),
 });
 
-export const { useHalalCheckMutation, useGetHistoryQuery, useImproveCheckMutation } = scanApi;
+export const { 
+    useHalalCheckMutation, 
+    useGetHistoryQuery, 
+    useImproveCheckMutation,
+    useSearchProductsQuery,
+    useLazySearchProductsQuery,
+} = scanApi;

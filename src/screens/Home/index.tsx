@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     TouchableOpacity,
@@ -19,7 +19,7 @@ import CryptoJS from 'crypto-js';
 import TextRecognition from '@react-native-ml-kit/text-recognition';
 import { RootStackParamList, BottomTabParamList } from '../../navigation/types/RootParamList';
 import { RootState } from '../../redux/store';
-import { useGetHistoryQuery } from '../../redux/scanApi/scanApi';
+import { useGetHistoryQuery, useSearchProductsQuery } from '../../redux/scanApi/scanApi';
 import { ScanHistoryItem } from '../../redux/slices/scanHistory/types';
 import { uploadImageToBackend } from '../../utils/imageUpload';
 import Theme from '../../theme/theme';
@@ -32,12 +32,6 @@ type HomeNavigationProp = CompositeNavigationProp<
     NativeStackNavigationProp<RootStackParamList>
 >;
 
-const PHOTO_SLOTS = [
-    { k: 'front' as const, label: 'Front of pack', sub: 'Brand & product name', hint: 'Show the front cover of the package.' },
-    { k: 'back' as const, label: 'Back of pack', sub: 'Manufacturer, barcode', hint: 'Show the back of the package.' },
-    { k: 'ingredients' as const, label: 'Ingredients', sub: 'Full ingredients list', hint: 'Zoom in on the ingredients list.' },
-];
-
 function Home() {
     const navigation = useNavigation<HomeNavigationProp>();
     const route = useRoute<RouteProp<BottomTabParamList, 'Home'>>();
@@ -45,12 +39,13 @@ function Home() {
     const { user } = useSelector((state: RootState) => state.auth);
 
     const [productName, setProductName] = useState('');
-    const [photos, setPhotos] = useState<{
-        front?: string;
-        back?: string;
-        ingredients?: string;
-    }>({});
     const [isProcessing, setIsProcessing] = useState(false);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+
+    // Call suggestion query when product name has 2+ characters
+    const { data: suggestions } = useSearchProductsQuery(productName.trim(), {
+        skip: productName.trim().length < 2 || !showSuggestions,
+    });
 
     // Fetch API Scan History
     const { data: apiHistory, refetch } = useGetHistoryQuery();
@@ -69,7 +64,7 @@ function Home() {
                 id: item.id.toString(),
                 ingredients: item.ingredient_text,
                 productName: item.product_name,
-                imageUri: item.front_image || item.ingredients_image || '',
+                imageUri: item.front_image || item.back_image || item.ingredients_image || '',
                 frontImage: item.front_image,
                 backImage: item.back_image,
                 ingredientsImage: item.ingredients_image,
@@ -84,32 +79,6 @@ function Home() {
         }
     }, [apiHistory]);
 
-    // Handle returned photo from camera / Scan screen
-    useEffect(() => {
-        if (route.params?.capturedPhoto) {
-            const { slotKey, uri } = route.params.capturedPhoto;
-            setPhotos(prev => ({
-                ...prev,
-                ...route.params?.existingPhotos,
-                [slotKey]: uri,
-            }));
-            // Immediately clear param to prevent repeat updates
-            navigation.setParams({ capturedPhoto: undefined, existingPhotos: undefined });
-        }
-    }, [route.params?.capturedPhoto, route.params?.existingPhotos, navigation]);
-
-    const removePhoto = (key: 'front' | 'back' | 'ingredients') => {
-        setPhotos(prev => {
-            const next = { ...prev };
-            delete next[key];
-            return next;
-        });
-    };
-
-    const resetAll = () => {
-        setPhotos({});
-        setProductName('');
-    };
 
     const handleRecentScanPress = (item: ScanHistoryItem) => {
         navigation.navigate('IngredientsResult', {
@@ -131,7 +100,7 @@ function Home() {
         return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     };
 
-    const processImageWithTextRecognition = async (imagePath: string) => {
+    const processImageWithTextRecognition = useCallback(async (imagePath: string) => {
         try {
             console.log('Processing image with Text Recognition:', imagePath);
             const result: any = await TextRecognition.recognize(imagePath);
@@ -160,41 +129,22 @@ function Home() {
             console.error('Error in processImageWithTextRecognition:', error);
             throw error;
         }
-    };
+    }, []);
 
-    const handleProcess = async () => {
-        if (!photos.ingredients) {
-            Alert.alert('Required', 'Please capture or select the ingredients image.');
-            return;
-        }
-        if (!productName.trim()) {
-            Alert.alert('Required', 'Please enter a product name.');
-            return;
-        }
-
+    const processIngredientsScan = useCallback(async (uri: string, name?: string) => {
         setIsProcessing(true);
         try {
-            const safeUpload = async (uri: string | undefined): Promise<string> => {
-                if (!uri) return '';
-                    return await uploadImageToBackend(uri, productName);
-            };
+            const finalProductName = name || productName.trim();
+            // Concurrent Upload and Text Recognition
+            const uploadPromise = uploadImageToBackend(uri, finalProductName);
 
-            // Concurrent uploads to S3 via backend
-            const frontUploadPromise = safeUpload(photos.front);
-            const backUploadPromise = safeUpload(photos.back);
-            const ingredientsUploadPromise = safeUpload(photos.ingredients);
-
-            // Concurrent Text Recognition
             const imagePath = Platform.OS === 'android'
-                ? photos.ingredients
-                : photos.ingredients.replace('file://', '');
-
+                ? uri
+                : uri.replace('file://', '');
             const textExtractionPromise = processImageWithTextRecognition(imagePath);
 
-            const [frontUrl, backUrl, ingredientsUrl, extractedText] = await Promise.all([
-                frontUploadPromise,
-                backUploadPromise,
-                ingredientsUploadPromise,
+            const [ingredientsUrl, extractedText] = await Promise.all([
+                uploadPromise,
                 textExtractionPromise,
             ]);
 
@@ -204,10 +154,8 @@ function Home() {
                 navigation.navigate('IngredientsResult', {
                     ingredients: extractedText,
                     ingredients_hash,
-                    productName,
-                    imageUri: photos.ingredients,
-                    frontImage: frontUrl || undefined,
-                    backImage: backUrl || undefined,
+                    productName: finalProductName,
+                    imageUri: uri,
                     ingredientsImage: ingredientsUrl || undefined,
                 });
             } else {
@@ -219,12 +167,28 @@ function Home() {
         } finally {
             setIsProcessing(false);
         }
-    };
+    }, [productName, navigation, processImageWithTextRecognition]);
 
-    const allCaptured = !!(photos.front && photos.back && photos.ingredients);
-    const canAnalyse = allCaptured && productName.trim().length > 0;
-    const capturedCount = Object.keys(photos).length;
-    const nextSlot = PHOTO_SLOTS.find(s => !photos[s.k]) || PHOTO_SLOTS[0];
+    // Handle returned photo from camera / Scan screen
+    useEffect(() => {
+        if (route.params?.capturedPhoto) {
+            const { uri } = route.params.capturedPhoto;
+            const paramProductName = route.params?.productName;
+            
+            // Set the product name from parameter if it was lost in state
+            if (paramProductName && !productName.trim()) {
+                setProductName(paramProductName);
+            }
+
+            // Immediately clear param to prevent repeat updates
+            navigation.setParams({ capturedPhoto: undefined, existingPhotos: undefined, productName: undefined });
+
+            const finalProductName = productName.trim() || paramProductName || '';
+            if (uri && finalProductName.trim()) {
+                processIngredientsScan(uri, finalProductName);
+            }
+        }
+    }, [route.params?.capturedPhoto, route.params?.productName, productName, navigation, processIngredientsScan]);
 
     const getStatusColor = (status?: string) => {
         switch (status?.toLowerCase()) {
@@ -280,13 +244,22 @@ function Home() {
                             </MediumText>
                         </View>
                     </View>
-                    <TouchableOpacity 
-                        style={styles.historyBtn} 
-                        onPress={() => navigation.navigate('History')}
-                        activeOpacity={0.7}
-                    >
-                        <Icon name="time-outline" size={22} color={Theme.color.COLOR_INK} />
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', gap: 10 }}>
+                        <TouchableOpacity 
+                            style={styles.historyBtn} 
+                            onPress={() => navigation.navigate('Search')}
+                            activeOpacity={0.7}
+                        >
+                            <Icon name="search-outline" size={20} color={Theme.color.COLOR_INK} />
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                            style={styles.historyBtn} 
+                            onPress={() => navigation.navigate('History')}
+                            activeOpacity={0.7}
+                        >
+                            <Icon name="time-outline" size={20} color={Theme.color.COLOR_INK} />
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 {/* Hero Scan Box */}
@@ -298,7 +271,7 @@ function Home() {
                         Check a product&apos;s ingredients
                     </LargeText>
                     <SmallText size={3.3} fontFamily={Theme.fonts.FONT_NUNITO_REGULAR} color={Theme.color.COLOR_MUTED} textStyles={{ marginBottom: 18 }}>
-                        Add the product name and 3 clear photos. We&apos;ll do the rest.
+                        Enter the product name and capture its ingredients to verify.
                     </SmallText>
 
                     {/* Product Name Input */}
@@ -306,136 +279,94 @@ function Home() {
                         label="Product Name"
                         placeholder="e.g. Belgian chocolate cookies"
                         value={productName}
-                        onChangeText={setProductName}
+                        onChangeText={(text) => {
+                            setProductName(text);
+                            setShowSuggestions(true);
+                        }}
                         containerStyle={{ marginHorizontal: 0 }}
                         renderRightIcon={
                             productName ? (
-                                <TouchableOpacity onPress={() => setProductName('')}>
+                                <TouchableOpacity onPress={() => { setProductName(''); setShowSuggestions(false); }}>
                                     <Icon name="close-circle" size={18} color={Theme.color.COLOR_MUTED_2} />
                                 </TouchableOpacity>
                             ) : undefined
                         }
                     />
 
-                    {/* Photo Slots Section Header */}
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, marginTop: 12 }}>
-                        <SmallText size={3} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} color={Theme.color.COLOR_MUTED}>
-                            PHOTOS
-                        </SmallText>
-                        <View style={{
-                            flexDirection: 'row', 
-                            alignItems: 'center', 
-                            backgroundColor: allCaptured ? Theme.color.COLOR_PRIMARY_GREEN_BG : 'transparent',
-                            paddingHorizontal: 8,
-                            paddingVertical: 2,
-                            borderRadius: 12
-                        }}>
-                            {allCaptured && <Icon name="checkmark" size={12} color={Theme.color.COLOR_PRIMARY_GREEN} style={{ marginRight: 4 }} />}
-                            <SmallText size={3} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} color={allCaptured ? Theme.color.COLOR_PRIMARY_GREEN : Theme.color.COLOR_MUTED_2}>
-                                {capturedCount} / 3
-                            </SmallText>
-                        </View>
-                    </View>
-
-                    {/* Photo Slots Grid */}
-                    <View style={styles.slotRow}>
-                        {PHOTO_SLOTS.map((slot, index) => {
-                            const filled = !!photos[slot.k];
-                            const imagePath = photos[slot.k];
-
-                            return (
-                                <TouchableOpacity
-                                    key={slot.k}
-                                    style={[styles.slotItem, filled ? styles.filledSlot : styles.emptySlot]}
-                                    onPress={() => {
-                                        if (filled) {
-                                            removePhoto(slot.k);
-                                        } else {
-                                            navigation.navigate('Scan', {
-                                                slotKey: slot.k,
-                                                existingPhotos: photos,
+                    {/* Suggestions Autocomplete List Overlay */}
+                    {showSuggestions && suggestions && suggestions.length > 0 && productName.trim().length >= 2 && (
+                        <View style={styles.suggestionsContainer}>
+                            <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: 200 }} nestedScrollEnabled>
+                                {suggestions.map((item: any) => (
+                                    <TouchableOpacity
+                                        key={item.id}
+                                        style={styles.suggestionItem}
+                                        onPress={() => {
+                                            setShowSuggestions(false);
+                                            setProductName(item.product_name);
+                                            navigation.navigate('IngredientsResult', {
+                                                ingredients: item.ingredient_text,
+                                                ingredients_hash: item.ingredients_hash || '',
+                                                productName: item.product_name,
+                                                imageUri: item.front_image || item.back_image || item.ingredients_image || '',
+                                                frontImage: item.front_image,
+                                                backImage: item.back_image,
+                                                ingredientsImage: item.ingredients_image,
+                                                halalCheckResult: {
+                                                    overall_status: item.overall_status,
+                                                    reasoning: item.reasoning,
+                                                    ingredients_analysis: item.ingredients_analysis
+                                                }
                                             });
-                                        }
-                                    }}
-                                    activeOpacity={0.8}
-                                >
-                                    {/* Number Badge or Checkmark */}
-                                    <View style={[
-                                        styles.checkmarkBadge,
-                                        {
-                                            backgroundColor: filled ? Theme.color.COLOR_PRIMARY_GREEN : '#C5CCC9',
-                                            width: 18,
-                                            height: 18,
-                                            borderRadius: 9,
-                                            justifyContent: 'center',
-                                            alignItems: 'center',
-                                            left: 6,
-                                            top: 6,
-                                            position: 'absolute'
-                                        }
-                                    ]}>
-                                        {filled ? (
-                                            <Icon name="checkmark" size={10} color="#FFFFFF" />
-                                        ) : (
-                                            <SmallText size={2.5} color="#FFFFFF" fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
-                                                {index + 1}
-                                            </SmallText>
-                                        )}
-                                    </View>
-
-                                    {/* Thumbnail or Plus icon */}
-                                    {filled && imagePath ? (
-                                        <Image source={{ uri: imagePath }} style={styles.slotThumbnail} resizeMode="cover" />
-                                    ) : (
-                                        <View style={[styles.slotIcon, { width: 28, height: 28, borderRadius: 14, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#ECEFF1', justifyContent: 'center', alignItems: 'center' }]}>
-                                            <Icon name="add" size={16} color={Theme.color.COLOR_MUTED} />
+                                        }}
+                                    >
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                                            <View style={styles.scanThumbnail}>
+                                                {item.front_image || item.back_image || item.ingredients_image ? (
+                                                    <Image source={{ uri: item.front_image || item.back_image || item.ingredients_image }} style={{ width: '100%', height: '100%' }} />
+                                                ) : (
+                                                    <Icon name="fast-food-outline" size={18} color={Theme.color.COLOR_MUTED} />
+                                                )}
+                                            </View>
+                                            <View style={{ flex: 1 }}>
+                                                <MediumText size={3.4} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} color={Theme.color.COLOR_INK} numberOfLines={1}>
+                                                    {item.product_name}
+                                                </MediumText>
+                                            </View>
                                         </View>
-                                    )}
+                                        <View style={[styles.suggestionStatusBadge, { backgroundColor: getStatusBgColor(item.overall_status) }]}>
+                                            <SmallText size={2.4} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} color={getStatusColor(item.overall_status)}>
+                                                {(item.overall_status || 'doubtful').toUpperCase()}
+                                            </SmallText>
+                                        </View>
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        </View>
+                    )}
 
-                                    {/* Delete overlay click */}
-                                    {filled && (
-                                        <TouchableOpacity
-                                            style={styles.deleteBadge}
-                                            onPress={(e) => {
-                                                e.stopPropagation();
-                                                removePhoto(slot.k);
-                                            }}
-                                            activeOpacity={0.7}
-                                        >
-                                            <Icon name="close" size={12} color="#FFFFFF" />
-                                        </TouchableOpacity>
-                                    )}
-
-                                    {/* Slot titles */}
-                                    <View style={{ position: 'absolute', bottom: 8, left: 0, right: 0, paddingHorizontal: 4 }}>
-                                        <SmallText size={2.6} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} color={filled ? '#074330' : Theme.color.COLOR_INK} textAlign="center">
-                                            {slot.label}
-                                        </SmallText>
-                                        <SmallText size={2.2} color={filled ? 'rgba(7,67,48,0.7)' : Theme.color.COLOR_MUTED_2} textAlign="center">
-                                            {slot.sub}
-                                        </SmallText>
-                                    </View>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </View>
-
-                    {/* Verify Trigger Button */}
+                    {/* Scan Ingredients Button */}
                     <TouchableOpacity
                         style={[
                             styles.verifyBtn,
                             { 
-                                backgroundColor: canAnalyse ? Theme.color.COLOR_PRIMARY_GREEN : '#ECEFF1',
+                                backgroundColor: productName.trim().length > 0 ? Theme.color.COLOR_PRIMARY_GREEN : '#ECEFF1',
                                 opacity: isProcessing ? 0.8 : 1,
                                 flexDirection: 'row',
                                 justifyContent: 'center',
                                 alignItems: 'center',
                                 gap: 8,
-                                shadowColor: canAnalyse ? Theme.color.COLOR_PRIMARY_GREEN : 'transparent'
+                                shadowColor: productName.trim().length > 0 ? Theme.color.COLOR_PRIMARY_GREEN : 'transparent',
+                                marginTop: 16
                             }
                         ]}
-                        onPress={canAnalyse && !isProcessing ? handleProcess : undefined}
-                        disabled={!canAnalyse || isProcessing}
+                        onPress={productName.trim().length > 0 && !isProcessing ? () => {
+                            navigation.navigate('Scan', {
+                                slotKey: 'ingredients',
+                                productName: productName.trim()
+                            });
+                        } : undefined}
+                        disabled={productName.trim().length === 0 || isProcessing}
                         activeOpacity={0.8}
                     >
                         {isProcessing ? (
@@ -447,67 +378,14 @@ function Home() {
                             </>
                         ) : (
                             <>
-                                <Icon name="sparkles" size={18} color={canAnalyse ? '#FFFFFF' : Theme.color.COLOR_MUTED_2} />
-                                <SmallText size={3.8} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} color={canAnalyse ? '#FFFFFF' : Theme.color.COLOR_MUTED_2}>
-                                    {canAnalyse ? 'Analyse with AI' : 
-                                     !allCaptured ? `Add ${3 - capturedCount} more photo${3 - capturedCount > 1 ? 's' : ''}` : 
-                                     'Add a product name'}
+                                <Icon name="scan" size={18} color={productName.trim().length > 0 ? '#FFFFFF' : Theme.color.COLOR_MUTED_2} />
+                                <SmallText size={3.8} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} color={productName.trim().length > 0 ? '#FFFFFF' : Theme.color.COLOR_MUTED_2}>
+                                    Scan Ingredients
                                 </SmallText>
                             </>
                         )}
                     </TouchableOpacity>
-
-                    {/* Clear All Trigger */}
-                    {(capturedCount > 0 || productName.length > 0) && !isProcessing && (
-                        <TouchableOpacity onPress={resetAll} style={{ alignSelf: 'center', marginTop: 12 }}>
-                            <SmallText size={3} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM} color={Theme.color.COLOR_MUTED}>
-                                Clear all
-                            </SmallText>
-                        </TouchableOpacity>
-                    )}
                 </View>
-
-                {/* Quick Capture Shortcut Banner */}
-                {capturedCount === 0 && (
-                    <TouchableOpacity
-                        style={{
-                            backgroundColor: '#0F1411',
-                            borderRadius: 18,
-                            padding: 16,
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            marginBottom: 24,
-                        }}
-                        onPress={() => navigation.navigate('Scan', {
-                            slotKey: nextSlot.k,
-                            existingPhotos: photos,
-                        })}
-                        activeOpacity={0.8}
-                    >
-                        <View style={{
-                            width: 44,
-                            height: 44,
-                            borderRadius: 14,
-                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                            borderWidth: 1,
-                            borderColor: 'rgba(255, 255, 255, 0.18)',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            marginRight: 14,
-                        }}>
-                            <Icon name="camera" size={20} color="#FFFFFF" />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                            <SmallText size={3.6} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} color="#FFFFFF">
-                                Open camera
-                            </SmallText>
-                            <SmallText size={2.8} color="rgba(255, 255, 255, 0.6)" textStyles={{ marginTop: 2 }}>
-                                Start with the front of the pack
-                            </SmallText>
-                        </View>
-                        <Icon name="chevron-forward" size={18} color="rgba(255, 255, 255, 0.7)" />
-                    </TouchableOpacity>
-                )}
 
                 {/* Recent Scans Section */}
                 <View>

@@ -43,7 +43,7 @@ function History() {
                 id: item.id.toString(),
                 ingredients: item.ingredient_text,
                 productName: item.product_name,
-                imageUri: item.front_image || item.ingredients_image || '',
+                imageUri: item.front_image || item.back_image || item.ingredients_image || '',
                 frontImage: item.front_image,
                 backImage: item.back_image,
                 ingredientsImage: item.ingredients_image,
@@ -227,9 +227,9 @@ function History() {
                 <View style={styles.cardContent}>
                     {/* Thumbnail */}
                     <View style={styles.imageContainer}>
-                        {item.frontImage ? (
+                        {item.frontImage || item.backImage || item.ingredientsImage ? (
                             <Image
-                                source={{ uri: item.frontImage }}
+                                source={{ uri: item.frontImage || item.backImage || item.ingredientsImage }}
                                 style={styles.thumbnail}
                                 resizeMode="cover"
                             />

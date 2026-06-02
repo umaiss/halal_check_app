@@ -234,6 +234,31 @@ const styles = StyleSheet.create({
     emptyRecentText: {
         color: Theme.color.COLOR_MUTED,
         marginTop: 8,
+    },
+    suggestionsContainer: {
+        backgroundColor: '#FFFFFF',
+        borderColor: '#ECEFF1',
+        borderRadius: 14,
+        borderWidth: 1,
+        marginTop: 4,
+        maxHeight: 200,
+        overflow: 'hidden',
+        ...Theme.shadows.sh_card,
+        zIndex: 10,
+    },
+    suggestionItem: {
+        alignItems: 'center',
+        borderBottomColor: '#F4F6F5',
+        borderBottomWidth: 1,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingHorizontal: width(4),
+        paddingVertical: 12,
+    },
+    suggestionStatusBadge: {
+        borderRadius: 8,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
     }
 });
 

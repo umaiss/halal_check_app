@@ -21,4 +21,5 @@ export const API_ENDPOINTS = {
     FORGOT_PASSWORD: "api/auth/forgot-password",
     RESET_PASSWORD: "api/auth/reset-password",
     DELETE_ACCOUNT: "api/auth/delete-account",
+    SEARCH_PRODUCTS: "api/check-halal/search",
 };

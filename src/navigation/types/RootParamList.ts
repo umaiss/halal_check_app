@@ -9,6 +9,7 @@ export type RootStackParamList = {
                 back?: string;
                 ingredients?: string;
             };
+            productName?: string;
         };
     } | undefined;
     IngredientsResult: {
@@ -29,12 +30,14 @@ export type RootStackParamList = {
             back?: string;
             ingredients?: string;
         };
+        productName?: string;
     };
     Login: undefined;
     Signup: undefined;
     Upload: undefined;
     ForgotPassword: undefined;
     ResetPassword: { email: string };
+    Search: undefined;
 };
 
 export type BottomTabParamList = {
@@ -45,6 +48,7 @@ export type BottomTabParamList = {
             back?: string;
             ingredients?: string;
         };
+        productName?: string;
     };
     History: undefined;
     Profile: undefined;

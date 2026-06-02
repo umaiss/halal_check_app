@@ -35,7 +35,6 @@ function Scan() {
     const slotKey = route.params?.slotKey || 'ingredients';
 
     const slot = PHOTO_SLOTS.find(s => s.k === slotKey) || PHOTO_SLOTS[2];
-    const slotIndex = PHOTO_SLOTS.findIndex(s => s.k === slotKey);
 
     const { hasPermission, requestPermission } = useCameraPermission();
     const device = useCameraDevice('back');
@@ -92,6 +91,7 @@ function Scan() {
                                 uri: asset.uri,
                             },
                             existingPhotos: route.params?.existingPhotos,
+                            productName: route.params?.productName,
                         }
                     });
                 }
@@ -133,6 +133,7 @@ function Scan() {
                         uri: imageUri,
                     },
                     existingPhotos: route.params?.existingPhotos,
+                    productName: route.params?.productName,
                 }
             });
         } catch (error) {
@@ -217,10 +218,10 @@ function Scan() {
 
                     <View style={{ alignItems: 'center' }}>
                         <SmallText size={2.5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} color="rgba(255,255,255,0.6)" textStyles={{ letterSpacing: 1 }}>
-                            PHOTO {slotIndex + 1} OF 3
+                            SCANNING
                         </SmallText>
                         <MediumText size={3.8} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} color="#FFFFFF">
-                            {slot.label}
+                            Ingredients Label
                         </MediumText>
                     </View>
 
@@ -261,21 +262,7 @@ function Scan() {
                     </View>
                 </View>
 
-                {/* Progress Indicators */}
-                <View style={styles.dotsContainer}>
-                    {PHOTO_SLOTS.map((s, idx) => (
-                        <View
-                            key={s.k}
-                            style={[
-                                styles.dot,
-                                {
-                                    width: idx === slotIndex ? 24 : 8,
-                                    backgroundColor: idx === slotIndex ? '#FFFFFF' : 'rgba(255,255,255,0.3)'
-                                }
-                            ]}
-                        />
-                    ))}
-                </View>
+
 
                 {/* Bottom Capture Panel */}
                 <View style={styles.bottomBar}>
@@ -373,21 +360,6 @@ const styles = StyleSheet.create({
         height: 32,
         position: 'absolute',
         width: 32,
-    },
-    dot: {
-        borderRadius: 4,
-        height: 8,
-        marginHorizontal: 3,
-    },
-    dotsContainer: {
-        alignItems: 'center',
-        bottom: height(21),
-        flexDirection: 'row',
-        justifyContent: 'center',
-        left: 0,
-        position: 'absolute',
-        right: 0,
-        zIndex: 10,
     },
     errorContainer: {
         alignItems: 'center',

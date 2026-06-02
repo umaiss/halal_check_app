@@ -37,6 +37,8 @@ function IngredientsResult() {
     const [hasShownImproveModal, setHasShownImproveModal] = useState(false);
     const [barcodeImage, setBarcodeImage] = useState<string | null>(null);
     const [manufacturerImage, setManufacturerImage] = useState<string | null>(null);
+    const [frontImageImprove, setFrontImageImprove] = useState<string | null>(null);
+    const [backImageImprove, setBackImageImprove] = useState<string | null>(null);
     const [additionalImages, setAdditionalImages] = useState<string[]>([]);
     const [isSubmittingImprovement, setIsSubmittingImprovement] = useState(false);
 
@@ -192,7 +194,7 @@ function IngredientsResult() {
         }
     };
 
-    const handleCaptureImage = async (type: 'barcode' | 'manufacturer' | 'additional') => {
+    const handleCaptureImage = async (type: 'barcode' | 'manufacturer' | 'additional' | 'front' | 'back') => {
         try {
             const result = await launchImageLibrary({
                 mediaType: 'photo',
@@ -207,6 +209,8 @@ function IngredientsResult() {
                 
                 if (type === 'barcode') setBarcodeImage(uris[0]);
                 else if (type === 'manufacturer') setManufacturerImage(uris[0]);
+                else if (type === 'front') setFrontImageImprove(uris[0]);
+                else if (type === 'back') setBackImageImprove(uris[0]);
                 else setAdditionalImages([...additionalImages, ...uris]);
             }
         } catch (err) {
@@ -236,6 +240,20 @@ function IngredientsResult() {
                 uploadPromises.push(
                     uploadImageToBackend(manufacturerImage, productName)
                         .then(url => { if (url) improvementData.manufacturer_image = url; })
+                );
+            }
+
+            if (frontImageImprove) {
+                uploadPromises.push(
+                    uploadImageToBackend(frontImageImprove, productName)
+                        .then(url => { if (url) improvementData.front_image = url; })
+                );
+            }
+
+            if (backImageImprove) {
+                uploadPromises.push(
+                    uploadImageToBackend(backImageImprove, productName)
+                        .then(url => { if (url) improvementData.back_image = url; })
                 );
             }
 
@@ -766,6 +784,50 @@ function IngredientsResult() {
                                             <Image source={{ uri: manufacturerImage }} style={styles.previewThumbnail} />
                                         ) : (
                                             <Icon name="business" size={22} color={Theme.color.COLOR_WHITE} />
+                                        )}
+                                    </View>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity 
+                                    style={[styles.specificImageRow, frontImageImprove && styles.specificImageRowActive]} 
+                                    onPress={() => handleCaptureImage('front')}
+                                    activeOpacity={0.7}
+                                >
+                                    <View style={{ flex: 1 }}>
+                                        <SmallText textStyles={styles.fieldLabel} size={3.5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                                            Front Image
+                                        </SmallText>
+                                        <SmallText textStyles={styles.fieldSubLabel} size={2.8} fontFamily={Theme.fonts.FONT_NUNITO_REGULAR}>
+                                            Front photo of the product packaging
+                                        </SmallText>
+                                    </View>
+                                    <View style={[styles.captureButton, frontImageImprove && styles.captureButtonActive]}>
+                                        {frontImageImprove ? (
+                                            <Image source={{ uri: frontImageImprove }} style={styles.previewThumbnail} />
+                                        ) : (
+                                            <Icon name="image" size={22} color={Theme.color.COLOR_WHITE} />
+                                        )}
+                                    </View>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity 
+                                    style={[styles.specificImageRow, backImageImprove && styles.specificImageRowActive]} 
+                                    onPress={() => handleCaptureImage('back')}
+                                    activeOpacity={0.7}
+                                >
+                                    <View style={{ flex: 1 }}>
+                                        <SmallText textStyles={styles.fieldLabel} size={3.5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                                            Back Image
+                                        </SmallText>
+                                        <SmallText textStyles={styles.fieldSubLabel} size={2.8} fontFamily={Theme.fonts.FONT_NUNITO_REGULAR}>
+                                            Back photo with full ingredients list
+                                        </SmallText>
+                                    </View>
+                                    <View style={[styles.captureButton, backImageImprove && styles.captureButtonActive]}>
+                                        {backImageImprove ? (
+                                            <Image source={{ uri: backImageImprove }} style={styles.previewThumbnail} />
+                                        ) : (
+                                            <Icon name="image" size={22} color={Theme.color.COLOR_WHITE} />
                                         )}
                                     </View>
                                 </TouchableOpacity>

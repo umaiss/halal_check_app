@@ -44,6 +44,8 @@ export interface ImproveCheckRequest {
     barcode_image?: string;
     manufacturer_image?: string;
     additional_images?: string[];
+    front_image?: string;
+    back_image?: string;
 }
 
 export interface IngredientStatus {
