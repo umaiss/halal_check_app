@@ -60,4 +60,5 @@ export interface HalalCheckResponse {
     overall_status?: 'halal' | 'haram' | 'doubtful' | 'mushbooh';
     reasoning?: string;
     ingredients_analysis?: IngredientStatus[];
+    ingredients_found?: boolean;
 }

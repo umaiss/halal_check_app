@@ -152,6 +152,23 @@ function IngredientsResult() {
 
             const result = await halalCheck(formattedData).unwrap();
             console.log('Halal check API response:', result);
+
+            if (result.ingredients_found === false) {
+                Alert.alert(
+                    'No Ingredients Found',
+                    'We could not find any ingredients in this scan. Please make sure you are scanning a clear ingredients list.',
+                    [
+                        {
+                            text: 'OK',
+                            onPress: () => {
+                                navigation.goBack();
+                            }
+                        }
+                    ]
+                );
+                return;
+            }
+
             setHalalStatus(result);
 
             try {
@@ -169,7 +186,7 @@ function IngredientsResult() {
             console.error('Error checking halal status:', error.message);
             setHalalStatus(null);
         }
-    }, [formatDataForAPI, ingredients, route.params.ingredients_hash, frontImage, backImage, ingredientsImage, halalCheck, productName, imageUri]);
+    }, [formatDataForAPI, ingredients, route.params.ingredients_hash, frontImage, backImage, ingredientsImage, halalCheck, productName, imageUri, navigation]);
 
     // Call halal check API when component mounts OR use pre-loaded result
     useEffect(() => {
