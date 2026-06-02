@@ -199,7 +199,7 @@ function Login() {
                                         <Ionicons name="logo-google" size={22} color="#FFFFFF" />
                                     )}
                                 </TouchableOpacity>
-                                <TouchableOpacity 
+                                {/* <TouchableOpacity 
                                     style={styles.socialButton} 
                                     onPress={() => handleSocialLogin('Apple')}
                                     disabled={isLoading || isGoogleLoading || isAppleLoading}
@@ -209,7 +209,7 @@ function Login() {
                                     ) : (
                                         <Ionicons name="logo-apple" size={22} color="#FFFFFF" />
                                     )}
-                                </TouchableOpacity>
+                                </TouchableOpacity> */}
                             </View>
                         </View>
                     </View>
