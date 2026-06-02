@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, SafeAreaView, ScrollView, TouchableOpacity, Switch, StyleSheet, Alert } from 'react-native';
+import { View, SafeAreaView, ScrollView, TouchableOpacity, Switch, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -9,6 +9,7 @@ import { RootState } from '../../redux/store';
 import { SmallText } from '../../components/text';
 import Theme from '../../theme/theme';
 import { useGetHistoryQuery } from '../../redux/scanApi/scanApi';
+import { useDeleteAccountMutation } from '../../redux/authApi/authApi';
 import { styles } from './styles';
 
 function Profile() {
@@ -21,6 +22,8 @@ function Profile() {
 
     // Toggle States (Push notifications and Keep Scan History are removed)
     const [darkMode, setDarkMode] = useState(false);
+
+    const [deleteAccount, { isLoading: isDeleting }] = useDeleteAccountMutation();
 
     const handleLogout = () => {
         Alert.alert(
@@ -53,6 +56,37 @@ function Profile() {
 
     const handleLinkPress = (title: string) => {
         Alert.alert('Info', `${title} page is not implemented yet.`);
+    };
+
+    const handleDeleteAccount = () => {
+        Alert.alert(
+            'Delete Account',
+            'Are you sure you want to delete your account? This action is permanent and cannot be undone.',
+            [
+                {
+                    text: 'Cancel',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            const response = await deleteAccount().unwrap();
+                            await AsyncStorage.removeItem(ASYNC_KEYS.USER_TOKEN);
+                            await AsyncStorage.removeItem(ASYNC_KEYS.USER_REFRESH_TOKEN);
+                            await AsyncStorage.removeItem("UserInfo");
+                            dispatch(logout());
+                            Alert.alert('Success', response.message || 'Your account has been deleted successfully.');
+                        } catch (e: any) {
+                            console.error("Delete Account Error", e);
+                            Alert.alert('Error', e?.data?.message || e?.message || 'Failed to delete account. Please try again.');
+                        }
+                    },
+                },
+            ],
+            { cancelable: true }
+        );
     };
 
     const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : 'U';
@@ -183,7 +217,7 @@ function Profile() {
                         ACCOUNT
                     </SmallText>
                     <View style={[styles.groupCard, Theme.shadows.sh_card]}>
-                        <TouchableOpacity style={styles.settingsLinkRow} onPress={handleLogout} activeOpacity={0.7}>
+                        <TouchableOpacity style={styles.settingsLinkRow} onPress={handleLogout} activeOpacity={0.7} disabled={isDeleting}>
                             <View style={styles.rowLabelContainer}>
                                 <View style={[styles.iconWrapper, { backgroundColor: Theme.color.COLOR_HARAM_BG }]}>
                                     <Icon name="log-out-outline" size={18} color={Theme.color.COLOR_HARAM} />
@@ -193,6 +227,24 @@ function Profile() {
                                 </SmallText>
                             </View>
                             <Icon name="chevron-forward" size={16} color={Theme.color.COLOR_HARAM} />
+                        </TouchableOpacity>
+
+                        <View style={styles.divider} />
+
+                        <TouchableOpacity style={styles.settingsLinkRow} onPress={handleDeleteAccount} activeOpacity={0.7} disabled={isDeleting}>
+                            <View style={styles.rowLabelContainer}>
+                                <View style={[styles.iconWrapper, { backgroundColor: '#FEE2E2' }]}>
+                                    <Icon name="trash-outline" size={18} color="#EF4444" />
+                                </View>
+                                <SmallText textStyles={StyleSheet.flatten([styles.rowLabel, { color: '#EF4444' }])} size={3.4} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                                    Delete Account
+                                </SmallText>
+                            </View>
+                            {isDeleting ? (
+                                <ActivityIndicator size="small" color="#EF4444" />
+                            ) : (
+                                <Icon name="chevron-forward" size={16} color="#EF4444" />
+                            )}
                         </TouchableOpacity>
                     </View>
                 </View>

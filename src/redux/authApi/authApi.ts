@@ -49,6 +49,12 @@ export const authApi = createApi({
                 data: body,
             }),
         }),
+        deleteAccount: builder.mutation<{ message: string }, void>({
+            query: () => ({
+                url: API_ENDPOINTS.DELETE_ACCOUNT,
+                method: "DELETE",
+            }),
+        }),
     }),
 });
 
@@ -59,4 +65,5 @@ export const {
     useAppleLoginMutation,
     useForgotPasswordMutation,
     useResetPasswordMutation,
+    useDeleteAccountMutation,
 } = authApi;

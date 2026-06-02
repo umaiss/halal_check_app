@@ -149,10 +149,11 @@ function Signup() {
                                 label="Email"
                                 placeholder="Enter your email"
                                 value={email}
-                                onChangeText={(text: string) => { setEmail(text); if (emailError) setEmailError(''); }}
+                                onChangeText={(text: string) => { setEmail(text.toLowerCase()); if (emailError) setEmailError(''); }}
                                 error={emailError}
                                 keyboardType="email-address"
                                 mandatory
+                                inputProps={{ autoCapitalize: 'none' }}
                             />
                         </View>
 
