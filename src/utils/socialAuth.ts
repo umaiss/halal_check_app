@@ -5,7 +5,7 @@ import { Platform } from 'react-native';
 // Google Sign-In Setup
 // TODO: Replace this placeholder with your actual Web Client ID from the Google Cloud Console.
 // Using a placeholder first.
-export const GOOGLE_WEB_CLIENT_ID = 'YOUR_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com';
+export const GOOGLE_WEB_CLIENT_ID = '703800181468-5mb5i36g9vr75q2jjdjna9r8kp4ad403.apps.googleusercontent.com';
 
 GoogleSignin.configure({
     webClientId: GOOGLE_WEB_CLIENT_ID,
@@ -19,7 +19,7 @@ export const signInWithGoogle = async () => {
     try {
         await GoogleSignin.hasPlayServices();
         const response = await GoogleSignin.signIn();
-        
+
         // Handles structure differences across various library versions
         const idToken = response.data?.idToken || (response as any).idToken;
         const user = response.data?.user || (response as any).user;
