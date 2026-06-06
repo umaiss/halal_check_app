@@ -8,7 +8,7 @@ require Pod::Executable.execute_command('node', ['-p',
 platform :ios, '16.0'
 prepare_react_native_project!
 
-target 'react_native_boilerPlate' do
+target 'scan bazar' do
   config = use_native_modules!
 
   use_react_native!(
@@ -42,12 +42,57 @@ target 'react_native_boilerPlate' do
 
     # Clear EXCLUDED_ARCHS from main project targets to restore native simulator listing
     require 'xcodeproj'
-    project_path = File.join(__dir__, 'react_native_boilerPlate.xcodeproj')
+    project_path = File.join(__dir__, 'ScanBazar.xcodeproj')
     project = Xcodeproj::Project.open(project_path)
     project.targets.each do |target|
       target.build_configurations.each do |config|
         config.build_settings.delete('EXCLUDED_ARCHS')
         config.build_settings.delete('EXCLUDED_ARCHS[sdk=iphonesimulator*]')
+      end
+
+      # Add a build phase to restore/patch MLKit binaries dynamically during build
+      if target.name == 'scan bazar'
+        phase_name = 'Restore or Patch MLKit Binaries'
+        phase = target.shell_script_build_phases.find { |p| p.name == phase_name }
+        unless phase
+          phase = target.new_shell_script_build_phase(phase_name)
+        end
+        phase.shell_script = <<~SCRIPT
+          # This script runs during the Xcode build phase.
+          # It dynamically patches/restores MLKit frameworks based on whether we are building for Simulator or Device.
+
+          exec > "${SRCROOT}/build_phase.log" 2>&1
+          PODS_ROOT="${SRCROOT}/Pods"
+          PATCH_SCRIPT="${SRCROOT}/patch_mlimage/patch_all_mlkit.py"
+
+          echo "Running MLKit patch manager..."
+          echo "Platform: $EFFECTIVE_PLATFORM_NAME"
+          echo "SDK: $SDK_NAME"
+
+          if [ "$EFFECTIVE_PLATFORM_NAME" = "-iphonesimulator" ]; then
+            # Building for iOS Simulator: apply patch if not already applied
+            if [ -f "$PATCH_SCRIPT" ]; then
+              echo "Ensuring MLKit framework binaries are patched for Simulator..."
+              python3 "$PATCH_SCRIPT" "$PODS_ROOT"
+            else
+              echo "Error: patch_all_mlkit.py not found at $PATCH_SCRIPT"
+            fi
+          else
+            # Building for iOS Device: restore original unpatched binaries from backups
+            echo "Restoring original MLKit framework binaries from backup for Device build..."
+            find "$PODS_ROOT" -name "*.bak" | while read -r bak_path; do
+              binary_path="${bak_path%.bak}"
+              if [ -f "$bak_path" ]; then
+                echo "  Restoring $binary_path from backup"
+                cp -f "$bak_path" "$binary_path"
+              fi
+            done
+          fi
+        SCRIPT
+
+        # Move the build phase to run as the very first step (index 1, right after CP Check Pods Manifest)
+        target.build_phases.delete(phase)
+        target.build_phases.insert(1, phase)
       end
     end
     project.save

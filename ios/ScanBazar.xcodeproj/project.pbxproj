@@ -7,9 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		04001CBC25658EA475F2DAAC /* libPods-react_native_boilerPlate.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8B033B3E61F73F0F166F8602 /* libPods-react_native_boilerPlate.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		2D3C14216AA040749D09CDD7 /* Nunito-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D59578EE2D45432BAF8A843C /* Nunito-Medium.ttf */; };
+		407B698F2BF221BD828B1BED /* libPods-scan bazar.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0837B28B861C42AB5F15C189 /* libPods-scan bazar.a */; };
 		5F683885A4D6411D97408454 /* Nunito-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 089D6B971F12403B83928185 /* Nunito-Bold.ttf */; };
 		659ABCDCE73F4F9E8025D0D2 /* Nunito-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F65B6B24A2484410A47D9FB6 /* Nunito-Regular.ttf */; };
 		731F5624BBFE492FAF54E7EB /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 665E849ADB5A4FB1B88C20E6 /* Colors.xcassets */; };
@@ -21,21 +21,24 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0837B28B861C42AB5F15C189 /* libPods-scan bazar.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-scan bazar.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		089D6B971F12403B83928185 /* Nunito-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Nunito-Bold.ttf"; path = "../src/assets/fonts/Nunito-Bold.ttf"; sourceTree = "<group>"; };
 		093E39F422104A1A8C26F069 /* Nunito-ExtraBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Nunito-ExtraBold.ttf"; path = "../src/assets/fonts/Nunito-ExtraBold.ttf"; sourceTree = "<group>"; };
-		13B07F961A680F5B00A75B9A /* react_native_boilerPlate.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = react_native_boilerPlate.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = react_native_boilerPlate/Images.xcassets; sourceTree = "<group>"; };
-		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = react_native_boilerPlate/Info.plist; sourceTree = "<group>"; };
-		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = react_native_boilerPlate/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		665E849ADB5A4FB1B88C20E6 /* Colors.xcassets */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = folder.assetcatalog; name = Colors.xcassets; path = react_native_boilerPlate/Colors.xcassets; sourceTree = "<group>"; };
-		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = react_native_boilerPlate/AppDelegate.swift; sourceTree = "<group>"; };
-		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = react_native_boilerPlate/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		8B033B3E61F73F0F166F8602 /* libPods-react_native_boilerPlate.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-react_native_boilerPlate.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		923BC11524DF4C009A9EBD77 /* BootSplash.storyboard */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = BootSplash.storyboard; path = react_native_boilerPlate/BootSplash.storyboard; sourceTree = "<group>"; };
-		978DE970F1DA2891D0F16BA4 /* Pods-react_native_boilerPlate.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-react_native_boilerPlate.debug.xcconfig"; path = "Target Support Files/Pods-react_native_boilerPlate/Pods-react_native_boilerPlate.debug.xcconfig"; sourceTree = "<group>"; };
+		13B07F961A680F5B00A75B9A /* ScanBazar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ScanBazar.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = ScanBazar/Images.xcassets; sourceTree = "<group>"; };
+		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = ScanBazar/Info.plist; sourceTree = "<group>"; };
+		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = ScanBazar/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		665E849ADB5A4FB1B88C20E6 /* Colors.xcassets */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = folder.assetcatalog; name = Colors.xcassets; path = ScanBazar/Colors.xcassets; sourceTree = "<group>"; };
+		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = ScanBazar/AppDelegate.swift; sourceTree = "<group>"; };
+		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = ScanBazar/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		906A280EFF5CA72B89A83EF9 /* Pods-scan bazar.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-scan bazar.release.xcconfig"; path = "Target Support Files/Pods-scan bazar/Pods-scan bazar.release.xcconfig"; sourceTree = "<group>"; };
+		923BC11524DF4C009A9EBD77 /* BootSplash.storyboard */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = BootSplash.storyboard; path = ScanBazar/BootSplash.storyboard; sourceTree = "<group>"; };
+		978DE970F1DA2891D0F16BA4 /* Pods-ScanBazar.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ScanBazar.debug.xcconfig"; path = "Target Support Files/Pods-ScanBazar/Pods-ScanBazar.debug.xcconfig"; sourceTree = "<group>"; };
+		CA20F8552FD31F2600EB28F5 /* scan bazar.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "scan bazar.entitlements"; sourceTree = "<group>"; };
 		D59578EE2D45432BAF8A843C /* Nunito-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Nunito-Medium.ttf"; path = "../src/assets/fonts/Nunito-Medium.ttf"; sourceTree = "<group>"; };
-		E222CE4CE25A40397F41B3C2 /* Pods-react_native_boilerPlate.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-react_native_boilerPlate.release.xcconfig"; path = "Target Support Files/Pods-react_native_boilerPlate/Pods-react_native_boilerPlate.release.xcconfig"; sourceTree = "<group>"; };
+		E222CE4CE25A40397F41B3C2 /* Pods-ScanBazar.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ScanBazar.release.xcconfig"; path = "Target Support Files/Pods-ScanBazar/Pods-ScanBazar.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		F640321B57C50F3EA294DE09 /* Pods-scan bazar.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-scan bazar.debug.xcconfig"; path = "Target Support Files/Pods-scan bazar/Pods-scan bazar.debug.xcconfig"; sourceTree = "<group>"; };
 		F65B6B24A2484410A47D9FB6 /* Nunito-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Nunito-Regular.ttf"; path = "../src/assets/fonts/Nunito-Regular.ttf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -44,14 +47,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				04001CBC25658EA475F2DAAC /* libPods-react_native_boilerPlate.a in Frameworks */,
+				407B698F2BF221BD828B1BED /* libPods-scan bazar.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		13B07FAE1A68108700A75B9A /* react_native_boilerPlate */ = {
+		13B07FAE1A68108700A75B9A /* ScanBazar */ = {
 			isa = PBXGroup;
 			children = (
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
@@ -62,14 +65,14 @@
 				923BC11524DF4C009A9EBD77 /* BootSplash.storyboard */,
 				665E849ADB5A4FB1B88C20E6 /* Colors.xcassets */,
 			);
-			name = react_native_boilerPlate;
+			name = ScanBazar;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				8B033B3E61F73F0F166F8602 /* libPods-react_native_boilerPlate.a */,
+				0837B28B861C42AB5F15C189 /* libPods-scan bazar.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -84,7 +87,8 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
-				13B07FAE1A68108700A75B9A /* react_native_boilerPlate */,
+				CA20F8552FD31F2600EB28F5 /* scan bazar.entitlements */,
+				13B07FAE1A68108700A75B9A /* ScanBazar */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
@@ -99,7 +103,7 @@
 		83CBBA001A601CBA00E9B192 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				13B07F961A680F5B00A75B9A /* react_native_boilerPlate.app */,
+				13B07F961A680F5B00A75B9A /* ScanBazar.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -118,8 +122,10 @@
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				978DE970F1DA2891D0F16BA4 /* Pods-react_native_boilerPlate.debug.xcconfig */,
-				E222CE4CE25A40397F41B3C2 /* Pods-react_native_boilerPlate.release.xcconfig */,
+				978DE970F1DA2891D0F16BA4 /* Pods-ScanBazar.debug.xcconfig */,
+				E222CE4CE25A40397F41B3C2 /* Pods-ScanBazar.release.xcconfig */,
+				F640321B57C50F3EA294DE09 /* Pods-scan bazar.debug.xcconfig */,
+				906A280EFF5CA72B89A83EF9 /* Pods-scan bazar.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -127,11 +133,12 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		13B07F861A680F5B00A75B9A /* react_native_boilerPlate */ = {
+		13B07F861A680F5B00A75B9A /* scan bazar */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "react_native_boilerPlate" */;
+			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "scan bazar" */;
 			buildPhases = (
 				3B2C29CB568ABEE53D79E9F3 /* [CP] Check Pods Manifest.lock */,
+				FF156B661F2BF75752F29830 /* Restore or Patch MLKit Binaries */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
@@ -143,9 +150,9 @@
 			);
 			dependencies = (
 			);
-			name = react_native_boilerPlate;
-			productName = react_native_boilerPlate;
-			productReference = 13B07F961A680F5B00A75B9A /* react_native_boilerPlate.app */;
+			name = "scan bazar";
+			productName = ScanBazar;
+			productReference = 13B07F961A680F5B00A75B9A /* ScanBazar.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -161,7 +168,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "react_native_boilerPlate" */;
+			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "ScanBazar" */;
 			compatibilityVersion = "Xcode 12.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -174,7 +181,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				13B07F861A680F5B00A75B9A /* react_native_boilerPlate */,
+				13B07F861A680F5B00A75B9A /* scan bazar */,
 			);
 		};
 /* End PBXProject section */
@@ -230,7 +237,7 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-react_native_boilerPlate-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-scan bazar-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -243,19 +250,15 @@
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-react_native_boilerPlate/Pods-react_native_boilerPlate-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-scan bazar/Pods-scan bazar-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-react_native_boilerPlate/Pods-react_native_boilerPlate-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-scan bazar/Pods-scan bazar-resources-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-react_native_boilerPlate/Pods-react_native_boilerPlate-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-scan bazar/Pods-scan bazar-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		E9477B93A6225AAD3524AF77 /* [CP] Embed Pods Frameworks */ = {
@@ -264,20 +267,34 @@
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-react_native_boilerPlate/Pods-react_native_boilerPlate-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-scan bazar/Pods-scan bazar-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-react_native_boilerPlate/Pods-react_native_boilerPlate-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-scan bazar/Pods-scan bazar-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-scan bazar/Pods-scan bazar-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		FF156B661F2BF75752F29830 /* Restore or Patch MLKit Binaries */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Restore or Patch MLKit Binaries";
+			outputFileListPaths = (
 			);
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-react_native_boilerPlate/Pods-react_native_boilerPlate-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
+			shellScript = "# This script runs during the Xcode build phase.\n# It dynamically patches/restores MLKit frameworks based on whether we are building for Simulator or Device.\n\nexec > \"${SRCROOT}/build_phase.log\" 2>&1\nPODS_ROOT=\"${SRCROOT}/Pods\"\nPATCH_SCRIPT=\"${SRCROOT}/patch_mlimage/patch_all_mlkit.py\"\n\necho \"Running MLKit patch manager...\"\necho \"Platform: $EFFECTIVE_PLATFORM_NAME\"\necho \"SDK: $SDK_NAME\"\n\nif [ \"$EFFECTIVE_PLATFORM_NAME\" = \"-iphonesimulator\" ]; then\n  # Building for iOS Simulator: apply patch if not already applied\n  if [ -f \"$PATCH_SCRIPT\" ]; then\n    echo \"Ensuring MLKit framework binaries are patched for Simulator...\"\n    python3 \"$PATCH_SCRIPT\" \"$PODS_ROOT\"\n  else\n    echo \"Error: patch_all_mlkit.py not found at $PATCH_SCRIPT\"\n  fi\nelse\n  # Building for iOS Device: restore original unpatched binaries from backups\n  echo \"Restoring original MLKit framework binaries from backup for Device build...\"\n  find \"$PODS_ROOT\" -name \"*.bak\" | while read -r bak_path; do\n    binary_path=\"${bak_path%.bak}\"\n    if [ -f \"$bak_path\" ]; then\n      echo \"  Restoring $binary_path from backup\"\n      cp -f \"$bak_path\" \"$binary_path\"\n    fi\n  done\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -295,14 +312,15 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 978DE970F1DA2891D0F16BA4 /* Pods-react_native_boilerPlate.debug.xcconfig */;
+			baseConfigurationReference = F640321B57C50F3EA294DE09 /* Pods-scan bazar.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = "scan bazar.entitlements";
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 3J6MPB38PM;
+				DEVELOPMENT_TEAM = EGDVH93J6U;
 				ENABLE_BITCODE = NO;
-				INFOPLIST_FILE = react_native_boilerPlate/Info.plist;
+				INFOPLIST_FILE = ScanBazar/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Scan Bazar";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -315,8 +333,8 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.scanbazar.app;
-				PRODUCT_NAME = react_native_boilerPlate;
+				PRODUCT_BUNDLE_IDENTIFIER = com.scanbazarapp.app;
+				PRODUCT_NAME = ScanBazar;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -325,13 +343,14 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = E222CE4CE25A40397F41B3C2 /* Pods-react_native_boilerPlate.release.xcconfig */;
+			baseConfigurationReference = 906A280EFF5CA72B89A83EF9 /* Pods-scan bazar.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = "scan bazar.entitlements";
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 3J6MPB38PM;
-				INFOPLIST_FILE = react_native_boilerPlate/Info.plist;
+				DEVELOPMENT_TEAM = EGDVH93J6U;
+				INFOPLIST_FILE = ScanBazar/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Scan Bazar";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -344,8 +363,8 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.scanbazar.app;
-				PRODUCT_NAME = react_native_boilerPlate;
+				PRODUCT_BUNDLE_IDENTIFIER = com.scanbazarapp.app;
+				PRODUCT_NAME = ScanBazar;
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
@@ -430,7 +449,10 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -509,7 +531,10 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;
@@ -520,7 +545,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "react_native_boilerPlate" */ = {
+		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "scan bazar" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				13B07F941A680F5B00A75B9A /* Debug */,
@@ -529,7 +554,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "react_native_boilerPlate" */ = {
+		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "ScanBazar" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,

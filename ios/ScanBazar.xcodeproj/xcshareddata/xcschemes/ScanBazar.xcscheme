@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "react_native_boilerPlate.app"
-               BlueprintName = "react_native_boilerPlate"
-               ReferencedContainer = "container:react_native_boilerPlate.xcodeproj">
+               BuildableName = "ScanBazar.app"
+               BlueprintName = "scan bazar"
+               ReferencedContainer = "container:ScanBazar.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "react_native_boilerPlateTests.xctest"
-               BlueprintName = "react_native_boilerPlateTests"
-               ReferencedContainer = "container:react_native_boilerPlate.xcodeproj">
+               BuildableName = "ScanBazarTests.xctest"
+               BlueprintName = "ScanBazarTests"
+               ReferencedContainer = "container:ScanBazar.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "react_native_boilerPlate.app"
-            BlueprintName = "react_native_boilerPlate"
-            ReferencedContainer = "container:react_native_boilerPlate.xcodeproj">
+            BuildableName = "ScanBazar.app"
+            BlueprintName = "scan bazar"
+            ReferencedContainer = "container:ScanBazar.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "react_native_boilerPlate.app"
-            BlueprintName = "react_native_boilerPlate"
-            ReferencedContainer = "container:react_native_boilerPlate.xcodeproj">
+            BuildableName = "ScanBazar.app"
+            BlueprintName = "scan bazar"
+            ReferencedContainer = "container:ScanBazar.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

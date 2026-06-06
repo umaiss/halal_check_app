@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, SafeAreaView, StatusBar, Alert, ScrollView, ActivityIndicator } from 'react-native';
+import { View, TouchableOpacity, SafeAreaView, StatusBar, Alert, ScrollView, ActivityIndicator, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -199,17 +199,19 @@ function Login() {
                                         <Ionicons name="logo-google" size={22} color="#FFFFFF" />
                                     )}
                                 </TouchableOpacity>
-                                {/* <TouchableOpacity 
-                                    style={styles.socialButton} 
-                                    onPress={() => handleSocialLogin('Apple')}
-                                    disabled={isLoading || isGoogleLoading || isAppleLoading}
-                                >
-                                    {isAppleLoading ? (
-                                        <ActivityIndicator size="small" color="#FFFFFF" />
-                                    ) : (
-                                        <Ionicons name="logo-apple" size={22} color="#FFFFFF" />
-                                    )}
-                                </TouchableOpacity> */}
+                                {Platform.OS === 'ios' && (
+                                    <TouchableOpacity 
+                                        style={styles.socialButton} 
+                                        onPress={() => handleSocialLogin('Apple')}
+                                        disabled={isLoading || isGoogleLoading || isAppleLoading}
+                                    >
+                                        {isAppleLoading ? (
+                                            <ActivityIndicator size="small" color="#FFFFFF" />
+                                        ) : (
+                                            <Ionicons name="logo-apple" size={22} color="#FFFFFF" />
+                                        )}
+                                    </TouchableOpacity>
+                                )}
                             </View>
                         </View>
                     </View>

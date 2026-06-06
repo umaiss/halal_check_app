@@ -25,7 +25,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     window = UIWindow(frame: UIScreen.main.bounds)
 
     factory.startReactNative(
-      withModuleName: "react_native_boilerPlate",
+      withModuleName: "ScanBazar",
       in: window,
       launchOptions: launchOptions
     )

@@ -6,9 +6,11 @@ import { Platform } from 'react-native';
 // TODO: Replace this placeholder with your actual Web Client ID from the Google Cloud Console.
 // Using a placeholder first.
 export const GOOGLE_WEB_CLIENT_ID = '703800181468-5mb5i36g9vr75q2jjdjna9r8kp4ad403.apps.googleusercontent.com';
+export const GOOGLE_IOS_CLIENT_ID = '703800181468-nlu5a1jm6lebe4t40fkst06fbq27ukf3.apps.googleusercontent.com';
 
 GoogleSignin.configure({
     webClientId: GOOGLE_WEB_CLIENT_ID,
+    iosClientId: GOOGLE_IOS_CLIENT_ID,
     offlineAccess: false,
 });
 

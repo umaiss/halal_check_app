@@ -1,0 +1,13 @@
+Running MLKit patch manager...
+Platform: -iphoneos
+SDK: iphoneos26.4
+Restoring original MLKit framework binaries from backup for Device build...
+  Restoring /Users/umais.r/Documents/DPLprojects/halal_app/ios/Pods/MLKitTextRecognitionDevanagari/Frameworks/MLKitTextRecognitionDevanagari.framework/MLKitTextRecognitionDevanagari from backup
+  Restoring /Users/umais.r/Documents/DPLprojects/halal_app/ios/Pods/MLKitTextRecognitionKorean/Frameworks/MLKitTextRecognitionKorean.framework/MLKitTextRecognitionKorean from backup
+  Restoring /Users/umais.r/Documents/DPLprojects/halal_app/ios/Pods/MLKitTextRecognitionChinese/Frameworks/MLKitTextRecognitionChinese.framework/MLKitTextRecognitionChinese from backup
+  Restoring /Users/umais.r/Documents/DPLprojects/halal_app/ios/Pods/MLKitVision/Frameworks/MLKitVision.framework/MLKitVision from backup
+  Restoring /Users/umais.r/Documents/DPLprojects/halal_app/ios/Pods/MLKitCommon/Frameworks/MLKitCommon.framework/MLKitCommon from backup
+  Restoring /Users/umais.r/Documents/DPLprojects/halal_app/ios/Pods/MLKitTextRecognitionCommon/Frameworks/MLKitTextRecognitionCommon.framework/MLKitTextRecognitionCommon from backup
+  Restoring /Users/umais.r/Documents/DPLprojects/halal_app/ios/Pods/MLImage/Frameworks/MLImage.framework/MLImage from backup
+  Restoring /Users/umais.r/Documents/DPLprojects/halal_app/ios/Pods/MLKitTextRecognitionJapanese/Frameworks/MLKitTextRecognitionJapanese.framework/MLKitTextRecognitionJapanese from backup
+  Restoring /Users/umais.r/Documents/DPLprojects/halal_app/ios/Pods/MLKitTextRecognition/Frameworks/MLKitTextRecognition.framework/MLKitTextRecognition from backup
