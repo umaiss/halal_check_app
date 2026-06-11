@@ -138,9 +138,7 @@ function Upload() {
             const ingredientsUploadPromise = safeUpload(ingredientsImage?.uri);
 
             // Queue up text extraction concurrently with the uploads
-            const imagePath = Platform.OS === 'android'
-                ? ingredientsImage.uri
-                : ingredientsImage.uri.replace('file://', '');
+            const imagePath = ingredientsImage.uri;
 
             const textExtractionPromise = processImageWithTextRecognition(imagePath);
 

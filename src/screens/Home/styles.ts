@@ -259,6 +259,44 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         paddingHorizontal: 8,
         paddingVertical: 4,
+    },
+    scanButtonBig: {
+        backgroundColor: Theme.color.COLOR_PRIMARY_GREEN,
+        borderRadius: 16,
+        paddingVertical: 18,
+        paddingHorizontal: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        shadowColor: Theme.color.COLOR_PRIMARY_GREEN,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
+        elevation: 4,
+        marginTop: 4,
+        marginBottom: 10,
+    },
+    scanButtonContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+    scanIconContainer: {
+        marginRight: 14,
+        backgroundColor: 'rgba(255, 255, 255, 0.18)',
+        borderRadius: 10,
+        padding: 6,
+    },
+    scanTextContainer: {
+        flex: 1,
+        justifyContent: 'center',
+    },
+    searchDivider: {
+        height: 1,
+        backgroundColor: '#F4F6F5',
+        marginVertical: 18,
+    },
+    searchSection: {
+        marginTop: 2,
     }
 });
 

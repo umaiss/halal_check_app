@@ -49,6 +49,7 @@ function History() {
                 ingredientsImage: item.ingredients_image,
                 timestamp: new Date(item.saved_at).getTime(),
                 halalCheckResult: {
+                    id: item.id,
                     overall_status: item.overall_status,
                     reasoning: item.reasoning,
                     ingredients_analysis: item.ingredients_analysis
@@ -126,45 +127,7 @@ function History() {
         return date.toLocaleDateString();
     };
 
-    // Handle delete single item
-    const handleDeleteItem = async (id: string) => {
-        Alert.alert(
-            'Delete Scan',
-            'Are you sure you want to delete this scan from history?',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Delete',
-                    style: 'destructive',
-                    onPress: async () => {
-                        // API deletion placeholder (since no delete mutation exists in scanApi, we just show alert)
-                        console.log('Delete item:', id);
-                        Alert.alert('Info', 'Backend deletion is not implemented yet.');
-                    },
-                },
-            ]
-        );
-    };
 
-    // Handle clear all history
-    const handleClearAll = () => {
-        Alert.alert(
-            'Clear All History',
-            'Are you sure you want to clear all scan history? This action cannot be undone.',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Clear All',
-                    style: 'destructive',
-                    onPress: async () => {
-                        // API clear all placeholder
-                        console.log('Clear all history');
-                        Alert.alert('Info', 'Backend history clearing is not implemented yet.');
-                    },
-                },
-            ]
-        );
-    };
 
     // Handle refresh
     const onRefresh = async () => {
@@ -294,17 +257,8 @@ function History() {
                             </SmallText>
                         </View>
                     </View>
-
-                    {/* Delete Button */}
-                    <TouchableOpacity
-                        style={styles.deleteButton}
-                        onPress={() => handleDeleteItem(item.id)}
-                        activeOpacity={0.7}
-                    >
-                        <Icon name="trash-outline" size={18} color={Theme.color.COLOR_HARAM} />
-                    </TouchableOpacity>
-                </View>
-            </TouchableOpacity>
+            </View>
+        </TouchableOpacity>
         );
     };
 
@@ -364,28 +318,7 @@ function History() {
                         Scan History
                     </SmallText>
                 </View>
-                {scanHistory.length > 0 && (
-                    <TouchableOpacity
-                        style={styles.clearAllButton}
-                        onPress={handleClearAll}
-                        activeOpacity={0.7}
-                    >
-                        {isApiLoading ? (
-                            <ActivityIndicator size="small" color={Theme.color.COLOR_PRIMARY_GREEN} />
-                        ) : (
-                            <>
-                                <Icon name="trash-outline" size={16} color={Theme.color.COLOR_HARAM} />
-                                <SmallText
-                                    size={3.2}
-                                    fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}
-                                    color={Theme.color.COLOR_HARAM}
-                                >
-                                    Clear All
-                                </SmallText>
-                            </>
-                        )}
-                    </TouchableOpacity>
-                )}
+
             </View>
 
             {/* Modern Search Box */}

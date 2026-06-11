@@ -68,6 +68,7 @@ function Search() {
             backImage: item.back_image,
             ingredientsImage: item.ingredients_image,
             halalCheckResult: {
+                id: item.id,
                 overall_status: item.overall_status,
                 reasoning: item.reasoning,
                 ingredients_analysis: item.ingredients_analysis

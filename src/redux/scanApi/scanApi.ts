@@ -2,6 +2,7 @@ import { createApi } from "@reduxjs/toolkit/query/react";
 import { axiosBaseQuery } from "../services/baseQuery";
 import { HalalCheckRequest, HalalCheckResponse, ImproveCheckRequest } from "../services/types";
 import { API_ENDPOINTS } from "../../utils/constant";
+import { updateUserPoints } from "../slices/auth/authSlice";
 
 export const scanApi = createApi({
     reducerPath: "scanApi",
@@ -13,6 +14,16 @@ export const scanApi = createApi({
                 method: "POST",
                 data: halalCheckData,
             }),
+            async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+                try {
+                    const { data } = await queryFulfilled;
+                    if (data && typeof data.updated_points === 'number') {
+                        dispatch(updateUserPoints(data.updated_points));
+                    }
+                } catch (err) {
+                    console.error("Failed to update points from scan response:", err);
+                }
+            }
         }),
         improveCheck: builder.mutation<any, { id: number; data: ImproveCheckRequest }>({
             query: ({ id, data }) => ({
@@ -20,6 +31,16 @@ export const scanApi = createApi({
                 method: "PATCH",
                 data,
             }),
+            async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+                try {
+                    const { data } = await queryFulfilled;
+                    if (data && typeof data.updated_points === 'number') {
+                        dispatch(updateUserPoints(data.updated_points));
+                    }
+                } catch (err) {
+                    console.error("Failed to update points from improve response:", err);
+                }
+            }
         }),
         getHistory: builder.query<any, void>({
             query: () => ({

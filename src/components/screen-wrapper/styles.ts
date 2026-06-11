@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
   headerContainer: {
     alignItems: 'center',
     backgroundColor: Theme.color.COLOR_WHITE,
-    borderBottomColor: Theme.color.COLOR_LIGHT_GRAY,
+    borderBottomColor: Theme.color.COLOR_BORDER,
     borderBottomWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',

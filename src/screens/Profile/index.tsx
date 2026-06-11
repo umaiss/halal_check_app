@@ -9,12 +9,15 @@ import { RootState } from '../../redux/store';
 import { SmallText } from '../../components/text';
 import Theme from '../../theme/theme';
 import { useGetHistoryQuery } from '../../redux/scanApi/scanApi';
-import { useDeleteAccountMutation } from '../../redux/authApi/authApi';
+import { useDeleteAccountMutation, useGetProfileQuery } from '../../redux/authApi/authApi';
 import { styles } from './styles';
 
 function Profile() {
     const dispatch = useDispatch();
     const { user } = useSelector((state: RootState) => state.auth);
+    
+    // Fetch fresh user profile (points) on mount
+    useGetProfileQuery();
     
     // Fetch live scan count from API
     const { data: apiHistory } = useGetHistoryQuery();
@@ -124,7 +127,7 @@ function Profile() {
                     </View>
                 </View>
 
-                {/* Stats Row - Only displaying the dynamic scan counter */}
+                {/* Stats Row - Displaying dynamic scan counter and user points */}
                 <View style={styles.statsRow}>
                     <View style={[styles.statBox, Theme.shadows.sh_card]}>
                         <SmallText textStyles={{ color: Theme.color.COLOR_PRIMARY_GREEN }} size={5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
@@ -132,6 +135,14 @@ function Profile() {
                         </SmallText>
                         <SmallText textStyles={styles.statLabel} size={2.6} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM}>
                             Total Scans
+                        </SmallText>
+                    </View>
+                    <View style={[styles.statBox, Theme.shadows.sh_card]}>
+                        <SmallText textStyles={{ color: '#F59E0B' }} size={5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                            {user?.points !== undefined ? user.points : 100}
+                        </SmallText>
+                        <SmallText textStyles={styles.statLabel} size={2.6} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM}>
+                            My Points
                         </SmallText>
                     </View>
                 </View>

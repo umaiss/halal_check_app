@@ -1,7 +1,8 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { axiosBaseQuery } from "../services/baseQuery";
-import { LoginRequest, RegisterRequest, AuthResponse } from "../services/types";
+import { LoginRequest, RegisterRequest, AuthResponse, User } from "../services/types";
 import { API_ENDPOINTS } from "../../utils/constant";
+import { updateUser } from "../slices/auth/authSlice";
 
 export const authApi = createApi({
     reducerPath: "authApi",
@@ -55,6 +56,20 @@ export const authApi = createApi({
                 method: "DELETE",
             }),
         }),
+        getProfile: builder.query<User, void>({
+            query: () => ({
+                url: "api/auth/me",
+                method: "GET",
+            }),
+            async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+                try {
+                    const { data } = await queryFulfilled;
+                    dispatch(updateUser(data));
+                } catch (err) {
+                    console.error("Failed to fetch profile:", err);
+                }
+            }
+        }),
     }),
 });
 
@@ -66,4 +81,5 @@ export const {
     useForgotPasswordMutation,
     useResetPasswordMutation,
     useDeleteAccountMutation,
+    useGetProfileQuery,
 } = authApi;

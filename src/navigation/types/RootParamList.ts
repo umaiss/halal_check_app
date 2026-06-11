@@ -35,9 +35,14 @@ export type RootStackParamList = {
     Login: undefined;
     Signup: undefined;
     Upload: undefined;
+    Search: undefined;
+    PreviewScan: {
+        imageUri: string;
+        productName?: string;
+        scanFailed?: boolean;
+    };
     ForgotPassword: undefined;
     ResetPassword: { email: string };
-    Search: undefined;
 };
 
 export type BottomTabParamList = {

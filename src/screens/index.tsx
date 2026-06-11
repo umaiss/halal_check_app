@@ -9,3 +9,5 @@ export { default as Upload } from './Upload'
 export { default as ForgotPassword } from './ForgotPassword'
 export { default as ResetPassword } from './ResetPassword'
 export { default as Search } from './Search'
+export { default as PreviewScan } from './PreviewScan'
+

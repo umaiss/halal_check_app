@@ -38,13 +38,12 @@ function Home() {
 
     const { user } = useSelector((state: RootState) => state.auth);
 
-    const [productName, setProductName] = useState('');
-    const [isProcessing, setIsProcessing] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
 
-    // Call suggestion query when product name has 2+ characters
-    const { data: suggestions } = useSearchProductsQuery(productName.trim(), {
-        skip: productName.trim().length < 2 || !showSuggestions,
+    // Call suggestion query when search query has 2+ characters
+    const { data: suggestions } = useSearchProductsQuery(searchQuery.trim(), {
+        skip: searchQuery.trim().length < 2 || !showSuggestions,
     });
 
     // Fetch API Scan History
@@ -70,6 +69,7 @@ function Home() {
                 ingredientsImage: item.ingredients_image,
                 timestamp: new Date(item.saved_at).getTime(),
                 halalCheckResult: {
+                    id: item.id,
                     overall_status: item.overall_status,
                     reasoning: item.reasoning,
                     ingredients_analysis: item.ingredients_analysis
@@ -100,95 +100,7 @@ function Home() {
         return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     };
 
-    const processImageWithTextRecognition = useCallback(async (imagePath: string) => {
-        try {
-            console.log('Processing image with Text Recognition:', imagePath);
-            const result: any = await TextRecognition.recognize(imagePath);
 
-            let extractedText = '';
-            if (result && result.text) {
-                extractedText = result.text.trim();
-            } else if (result && result.blocks && Array.isArray(result.blocks) && result.blocks.length > 0) {
-                extractedText = result.blocks
-                    .map((block: any) => {
-                        if (typeof block === 'string') return block;
-                        return block.text || block.blockText || '';
-                    })
-                    .filter((text: string) => text && text.length > 0)
-                    .join(' ');
-            }
-
-            if (extractedText.length > 0) {
-                return extractedText
-                    .replace(/\s+/g, ' ')
-                    .replace(/\n+/g, ' ')
-                    .trim();
-            }
-            return null;
-        } catch (error) {
-            console.error('Error in processImageWithTextRecognition:', error);
-            throw error;
-        }
-    }, []);
-
-    const processIngredientsScan = useCallback(async (uri: string, name?: string) => {
-        setIsProcessing(true);
-        try {
-            const finalProductName = name || productName.trim();
-            // Concurrent Upload and Text Recognition
-            const uploadPromise = uploadImageToBackend(uri, finalProductName);
-
-            const imagePath = Platform.OS === 'android'
-                ? uri
-                : uri.replace('file://', '');
-            const textExtractionPromise = processImageWithTextRecognition(imagePath);
-
-            const [ingredientsUrl, extractedText] = await Promise.all([
-                uploadPromise,
-                textExtractionPromise,
-            ]);
-
-            if (extractedText) {
-                const ingredients_hash = CryptoJS.SHA256(extractedText).toString(CryptoJS.enc.Hex);
-
-                navigation.navigate('IngredientsResult', {
-                    ingredients: extractedText,
-                    ingredients_hash,
-                    productName: finalProductName,
-                    imageUri: uri,
-                    ingredientsImage: ingredientsUrl || undefined,
-                });
-            } else {
-                Alert.alert('No Text Detected', 'Could not detect ingredients text. Please try again with a clearer photo.');
-            }
-        } catch (error) {
-            console.error('Error processing scan:', error);
-            Alert.alert('Error', 'Failed to analyze ingredients. Please try again.');
-        } finally {
-            setIsProcessing(false);
-        }
-    }, [productName, navigation, processImageWithTextRecognition]);
-
-    // Handle returned photo from camera / Scan screen
-    useEffect(() => {
-        if (route.params?.capturedPhoto) {
-            const { uri } = route.params.capturedPhoto;
-            const paramProductName = route.params?.productName;
-            
-            // Set the product name from parameter if it was lost in state
-            if (paramProductName && !productName.trim()) {
-                setProductName(paramProductName);
-            }
-
-            // Immediately clear param to prevent repeat updates
-            navigation.setParams({ capturedPhoto: undefined, existingPhotos: undefined, productName: undefined });
-
-            const finalProductName = productName.trim() || paramProductName || '';
-            if (uri && finalProductName.trim()) {
-                processIngredientsScan(uri, finalProductName);
-            }
-        }
-    }, [route.params?.capturedPhoto, route.params?.productName, productName, navigation, processIngredientsScan]);
 
     const getStatusColor = (status?: string) => {
         switch (status?.toLowerCase()) {
@@ -267,34 +179,68 @@ function Home() {
                     <SmallText size={3} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} color={Theme.color.COLOR_PRIMARY_GREEN} textStyles={{ letterSpacing: 1 }}>
                         NEW SCAN
                     </SmallText>
-                    <LargeText size={5.5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} color={Theme.color.COLOR_INK} textStyles={{ marginTop: 4, marginBottom: 4 }}>
+                    <LargeText size={5.2} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} color={Theme.color.COLOR_INK} textStyles={{ marginTop: 4, marginBottom: 6 }}>
                         Check a product&apos;s ingredients
                     </LargeText>
-                    <SmallText size={3.3} fontFamily={Theme.fonts.FONT_NUNITO_REGULAR} color={Theme.color.COLOR_MUTED} textStyles={{ marginBottom: 18 }}>
-                        Enter the product name and capture its ingredients to verify.
+                    <SmallText size={3.2} fontFamily={Theme.fonts.FONT_NUNITO_REGULAR} color={Theme.color.COLOR_MUTED} textStyles={{ marginBottom: 18 }}>
+                        Capture a photo of the ingredients list on any product to instantly verify its Halal status.
                     </SmallText>
 
-                    {/* Product Name Input */}
-                    <Input
-                        label="Product Name"
-                        placeholder="e.g. Belgian chocolate cookies"
-                        value={productName}
-                        onChangeText={(text) => {
-                            setProductName(text);
-                            setShowSuggestions(true);
+                    {/* Scan Ingredients Button - Large & Premium */}
+                    <TouchableOpacity
+                        style={styles.scanButtonBig}
+                        onPress={() => {
+                            navigation.navigate('Scan', {
+                                slotKey: 'ingredients'
+                            });
                         }}
-                        containerStyle={{ marginHorizontal: 0 }}
-                        renderRightIcon={
-                            productName ? (
-                                <TouchableOpacity onPress={() => { setProductName(''); setShowSuggestions(false); }}>
-                                    <Icon name="close-circle" size={18} color={Theme.color.COLOR_MUTED_2} />
-                                </TouchableOpacity>
-                            ) : undefined
-                        }
-                    />
+                        activeOpacity={0.85}
+                    >
+                        <View style={styles.scanButtonContent}>
+                            <View style={styles.scanIconContainer}>
+                                <Icon name="camera" size={24} color="#FFFFFF" />
+                            </View>
+                            <View style={styles.scanTextContainer}>
+                                <MediumText size={4} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} color="#FFFFFF">
+                                    Scan Ingredients
+                                </MediumText>
+                                <SmallText size={2.8} fontFamily={Theme.fonts.FONT_NUNITO_REGULAR} color="rgba(255, 255, 255, 0.85)" textStyles={{ marginTop: 1 }}>
+                                    Snap or upload a photo of the ingredients list
+                                </SmallText>
+                            </View>
+                            <Icon name="chevron-forward" size={18} color="#FFFFFF" />
+                        </View>
+                    </TouchableOpacity>
+
+                    {/* Divider */}
+                    <View style={styles.searchDivider} />
+
+                    {/* Search Field */}
+                    <View style={styles.searchSection}>
+                        <SmallText size={3.2} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} color={Theme.color.COLOR_INK} textStyles={{ marginBottom: 8, letterSpacing: 0.5 }}>
+                            OR SEARCH PRODUCTS
+                        </SmallText>
+                        <Input
+                            placeholder="Search verified products by name..."
+                            value={searchQuery}
+                            onChangeText={(text) => {
+                                setSearchQuery(text);
+                                setShowSuggestions(true);
+                            }}
+                            containerStyle={{ marginHorizontal: 0 }}
+                            icon={<Icon name="search-outline" size={18} color={Theme.color.COLOR_MUTED_2} style={{ marginRight: 8 }} />}
+                            renderRightIcon={
+                                searchQuery ? (
+                                    <TouchableOpacity onPress={() => { setSearchQuery(''); setShowSuggestions(false); }}>
+                                        <Icon name="close-circle" size={18} color={Theme.color.COLOR_MUTED_2} />
+                                    </TouchableOpacity>
+                                ) : undefined
+                            }
+                        />
+                    </View>
 
                     {/* Suggestions Autocomplete List Overlay */}
-                    {showSuggestions && suggestions && suggestions.length > 0 && productName.trim().length >= 2 && (
+                    {showSuggestions && suggestions && suggestions.length > 0 && searchQuery.trim().length >= 2 && (
                         <View style={styles.suggestionsContainer}>
                             <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: 200 }} nestedScrollEnabled>
                                 {suggestions.map((item: any) => (
@@ -303,7 +249,7 @@ function Home() {
                                         style={styles.suggestionItem}
                                         onPress={() => {
                                             setShowSuggestions(false);
-                                            setProductName(item.product_name);
+                                            setSearchQuery('');
                                             navigation.navigate('IngredientsResult', {
                                                 ingredients: item.ingredient_text,
                                                 ingredients_hash: item.ingredients_hash || '',
@@ -313,6 +259,7 @@ function Home() {
                                                 backImage: item.back_image,
                                                 ingredientsImage: item.ingredients_image,
                                                 halalCheckResult: {
+                                                    id: item.id,
                                                     overall_status: item.overall_status,
                                                     reasoning: item.reasoning,
                                                     ingredients_analysis: item.ingredients_analysis
@@ -344,47 +291,6 @@ function Home() {
                             </ScrollView>
                         </View>
                     )}
-
-                    {/* Scan Ingredients Button */}
-                    <TouchableOpacity
-                        style={[
-                            styles.verifyBtn,
-                            { 
-                                backgroundColor: productName.trim().length > 0 ? Theme.color.COLOR_PRIMARY_GREEN : '#ECEFF1',
-                                opacity: isProcessing ? 0.8 : 1,
-                                flexDirection: 'row',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                gap: 8,
-                                shadowColor: productName.trim().length > 0 ? Theme.color.COLOR_PRIMARY_GREEN : 'transparent',
-                                marginTop: 16
-                            }
-                        ]}
-                        onPress={productName.trim().length > 0 && !isProcessing ? () => {
-                            navigation.navigate('Scan', {
-                                slotKey: 'ingredients',
-                                productName: productName.trim()
-                            });
-                        } : undefined}
-                        disabled={productName.trim().length === 0 || isProcessing}
-                        activeOpacity={0.8}
-                    >
-                        {isProcessing ? (
-                            <>
-                                <ActivityIndicator size="small" color="#FFFFFF" />
-                                <SmallText size={3.8} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} color="#FFFFFF">
-                                    Analyzing...
-                                </SmallText>
-                            </>
-                        ) : (
-                            <>
-                                <Icon name="scan" size={18} color={productName.trim().length > 0 ? '#FFFFFF' : Theme.color.COLOR_MUTED_2} />
-                                <SmallText size={3.8} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD} color={productName.trim().length > 0 ? '#FFFFFF' : Theme.color.COLOR_MUTED_2}>
-                                    Scan Ingredients
-                                </SmallText>
-                            </>
-                        )}
-                    </TouchableOpacity>
                 </View>
 
                 {/* Recent Scans Section */}

@@ -4,7 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { RootStackParamList } from './types/RootParamList';
 import BottomTabNavigator from './BottomTabNavigator';
-import { IngredientsResult, Onboarding, Scan, Login, Signup, Upload, ForgotPassword, ResetPassword, Search } from '../screens';
+import { IngredientsResult, Onboarding, Scan, Login, Signup, Upload, ForgotPassword, ResetPassword, Search, PreviewScan } from '../screens';
 
 import { RootState } from '../redux/store';
 
@@ -57,6 +57,11 @@ function StackNavigator({ isOnboardingCompleted }: StackNavigatorProps) {
                         <Stack.Screen
                             name="Search"
                             component={Search}
+                            options={{ headerShown: false }}
+                        />
+                        <Stack.Screen
+                            name="PreviewScan"
+                            component={PreviewScan}
                             options={{ headerShown: false }}
                         />
                     </>

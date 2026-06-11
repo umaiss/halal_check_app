@@ -83,16 +83,9 @@ function Scan() {
             if (result.assets && result.assets.length > 0) {
                 const asset = result.assets[0];
                 if (asset.uri) {
-                    navigation.navigate('MainTabs', {
-                        screen: 'Home',
-                        params: {
-                            capturedPhoto: {
-                                slotKey,
-                                uri: asset.uri,
-                            },
-                            existingPhotos: route.params?.existingPhotos,
-                            productName: route.params?.productName,
-                        }
+                    navigation.navigate('PreviewScan', {
+                        imageUri: asset.uri,
+                        productName: route.params?.productName || '',
                     });
                 }
             }
@@ -125,16 +118,9 @@ function Scan() {
                 imageUri = `file://${photo.path}`;
             }
 
-            navigation.navigate('MainTabs', {
-                screen: 'Home',
-                params: {
-                    capturedPhoto: {
-                        slotKey,
-                        uri: imageUri,
-                    },
-                    existingPhotos: route.params?.existingPhotos,
-                    productName: route.params?.productName,
-                }
+            navigation.navigate('PreviewScan', {
+                imageUri,
+                productName: route.params?.productName || '',
             });
         } catch (error) {
             console.error('Error capturing photo:', error);

@@ -56,12 +56,12 @@ export const styles = StyleSheet.create({
         gap: 12,
     },
     screenHeader: {
-        backgroundColor: Theme.color.COLOR_WHITE,
+        // backgroundColor: Theme.color.COLOR_WHITE,
         borderBottomColor: Theme.color.COLOR_BORDER,
         borderBottomWidth: 1,
         paddingBottom: height(1.5),
         paddingHorizontal: width(5),
-        paddingTop: Platform.OS === 'ios' ? height(6) : height(2.5),
+        paddingTop: Platform.OS === 'ios' ? height(3) : height(2.5),
     },
     scrollContainer: {
         flex: 1,

@@ -22,6 +22,7 @@ export interface User {
     id: string;
     name: string;
     email: string;
+    points?: number;
 }
 
 export interface UpdateUserRequest {
@@ -61,4 +62,5 @@ export interface HalalCheckResponse {
     reasoning?: string;
     ingredients_analysis?: IngredientStatus[];
     ingredients_found?: boolean;
+    updated_points?: number;
 }

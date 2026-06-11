@@ -13,8 +13,8 @@ import {
   Text,
   TouchableOpacity,
   Animated,
+  ScrollView,
 } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import NetInfo from '@react-native-community/netinfo';
@@ -48,6 +48,10 @@ interface ScreenWrapperProps {
   onBackPress?: () => void;
   rightIcon?: ReactNode;
   onRightIconPress?: () => void;
+
+  // 🔹 Scroll Props
+  onScroll?: (event: any) => void;
+  scrollEventThrottle?: number;
 }
 
 const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
@@ -72,6 +76,8 @@ const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
   onBackPress,
   rightIcon,
   onRightIconPress,
+  onScroll,
+  scrollEventThrottle,
 }) => {
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
@@ -101,8 +107,7 @@ const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
     outputRange: [0, 40], // height anim
   });
 
-  const Content = (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+  const InnerContent = (
       <View
         style={[
           styles.container,
@@ -169,14 +174,16 @@ const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
         {headerUnScrollable()}
 
         {scrollEnabled ? (
-          <KeyboardAwareScrollView
+          <ScrollView
             style={[styles.container, { backgroundColor }]}
             contentContainerStyle={[styles.contentContainer, contentContainerStyle]}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
+            onScroll={onScroll}
+            scrollEventThrottle={scrollEventThrottle}
           >
             {children}
-          </KeyboardAwareScrollView>
+          </ScrollView>
         ) : (
           children
         )}
@@ -202,6 +209,13 @@ const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
           </View>
         )}
       </View>
+  );
+
+  const Content = scrollEnabled ? (
+    InnerContent
+  ) : (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      {InnerContent}
     </TouchableWithoutFeedback>
   );
 

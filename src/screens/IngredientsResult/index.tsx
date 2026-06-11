@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity, Image, ActivityIndicator, SafeAreaView, Modal, Alert, Platform, Share } from 'react-native';
+import { StyleSheet, View, ScrollView, TouchableOpacity, Image, ActivityIndicator, Modal, Alert, Platform, Share } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { RootStackParamList } from '../../navigation/types/RootParamList';
 import { SmallText } from '../../components/text';
+import ScreenWrapper from '../../components/screen-wrapper';
 import Theme from '../../theme/theme';
 import { useHalalCheckMutation, useImproveCheckMutation } from '../../redux/scanApi/scanApi';
 import { HalalCheckResponse } from '../../redux/services/types';
@@ -21,6 +22,9 @@ function IngredientsResult() {
     const route = useRoute<IngredientsResultRouteProp>();
     const { ingredients, imageUri, halalCheckResult, frontImage, backImage, ingredientsImage, productName } = route.params;
 
+    const imageCount = [frontImage, backImage, ingredientsImage].filter(Boolean).length || (imageUri ? 1 : 0);
+    const isSingleImage = imageCount === 1;
+
     // API hooks
     const [halalCheck, { data: halalCheckResultFromAPI, isLoading: isCheckingHalal, error: halalCheckError }] = useHalalCheckMutation();
     const [improveCheck] = useImproveCheckMutation();
@@ -35,8 +39,6 @@ function IngredientsResult() {
     // State for improvement modal
     const [isImproveModalVisible, setIsImproveModalVisible] = useState(false);
     const [hasShownImproveModal, setHasShownImproveModal] = useState(false);
-    const [barcodeImage, setBarcodeImage] = useState<string | null>(null);
-    const [manufacturerImage, setManufacturerImage] = useState<string | null>(null);
     const [frontImageImprove, setFrontImageImprove] = useState<string | null>(null);
     const [backImageImprove, setBackImageImprove] = useState<string | null>(null);
     const [additionalImages, setAdditionalImages] = useState<string[]>([]);
@@ -161,7 +163,11 @@ function IngredientsResult() {
                         {
                             text: 'OK',
                             onPress: () => {
-                                navigation.goBack();
+                                navigation.navigate('PreviewScan', {
+                                    imageUri: imageUri || '',
+                                    productName,
+                                    scanFailed: true,
+                                });
                             }
                         }
                     ]
@@ -183,8 +189,10 @@ function IngredientsResult() {
                 console.error('Failed to save scan to history:', storageError);
             }
         } catch (error: any) {
-            console.error('Error checking halal status:', error.message);
+            console.error('Error checking halal status:', error);
             setHalalStatus(null);
+            const errorMsg = error?.data?.error || error?.data?.message || error?.message || 'An error occurred during the Halal analysis.';
+            Alert.alert('Analysis Failed', errorMsg);
         }
     }, [formatDataForAPI, ingredients, route.params.ingredients_hash, frontImage, backImage, ingredientsImage, halalCheck, productName, imageUri, navigation]);
 
@@ -199,19 +207,21 @@ function IngredientsResult() {
     }, [halalCheckResult, ingredients, handleHalalCheck]);
 
     const handleScroll = (event: any) => {
-        const scrollY = event.nativeEvent.contentOffset.y;
-        const isMushbooh = halalStatus?.overall_status?.toLowerCase() === 'musbooh' || 
-                          halalStatus?.overall_status?.toLowerCase() === 'mushbooh' || 
-                          halalStatus?.overall_status?.toLowerCase() === 'doubtful' ||
-                          halalStatus?.overall_status?.toLowerCase() === 'doubt';
+        const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+        const isEnd = layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
 
-        if (scrollY > 50 && isMushbooh && !hasShownImproveModal && !isCheckingHalal) {
+        const isMushbooh = halalStatus?.overall_status?.toLowerCase() === 'musbooh' ||
+            halalStatus?.overall_status?.toLowerCase() === 'mushbooh' ||
+            halalStatus?.overall_status?.toLowerCase() === 'doubtful' ||
+            halalStatus?.overall_status?.toLowerCase() === 'doubt';
+
+        if (isEnd && isMushbooh && !hasShownImproveModal && !isCheckingHalal) {
             setIsImproveModalVisible(true);
             setHasShownImproveModal(true);
         }
     };
 
-    const handleCaptureImage = async (type: 'barcode' | 'manufacturer' | 'additional' | 'front' | 'back') => {
+    const handleCaptureImage = async (type: 'additional' | 'front' | 'back') => {
         try {
             const result = await launchImageLibrary({
                 mediaType: 'photo',
@@ -221,12 +231,12 @@ function IngredientsResult() {
                 selectionLimit: type === 'additional' ? 3 - additionalImages.length : 1,
             });
 
+            if (result.didCancel) return;
+
             if (result.assets && result.assets.length > 0) {
                 const uris = result.assets.map(asset => asset.uri).filter((uri): uri is string => !!uri);
-                
-                if (type === 'barcode') setBarcodeImage(uris[0]);
-                else if (type === 'manufacturer') setManufacturerImage(uris[0]);
-                else if (type === 'front') setFrontImageImprove(uris[0]);
+
+                if (type === 'front') setFrontImageImprove(uris[0]);
                 else if (type === 'back') setBackImageImprove(uris[0]);
                 else setAdditionalImages([...additionalImages, ...uris]);
             }
@@ -246,20 +256,6 @@ function IngredientsResult() {
             const improvementData: any = {};
             const uploadPromises: Promise<void>[] = [];
 
-            if (barcodeImage) {
-                uploadPromises.push(
-                    uploadImageToBackend(barcodeImage, productName)
-                        .then(url => { if (url) improvementData.barcode_image = url; })
-                );
-            }
-
-            if (manufacturerImage) {
-                uploadPromises.push(
-                    uploadImageToBackend(manufacturerImage, productName)
-                        .then(url => { if (url) improvementData.manufacturer_image = url; })
-                );
-            }
-
             if (frontImageImprove) {
                 uploadPromises.push(
                     uploadImageToBackend(frontImageImprove, productName)
@@ -275,7 +271,7 @@ function IngredientsResult() {
             }
 
             if (additionalImages.length > 0) {
-                const additionalPromises = additionalImages.map((uri) => 
+                const additionalPromises = additionalImages.map((uri) =>
                     uploadImageToBackend(uri, productName)
                 );
                 uploadPromises.push(
@@ -308,7 +304,7 @@ function IngredientsResult() {
             if (!halalStatus) return;
             const statusStr = halalStatus.overall_status?.toUpperCase() || 'UNKNOWN';
             const prodName = productName || 'Product';
-            
+
             await Share.share({
                 message: `Halal Check Verification Results:\nProduct: ${prodName}\nOverall Status: ${statusStr}\n\nChecked with Halal Check AI app.`,
             });
@@ -340,38 +336,16 @@ function IngredientsResult() {
     });
 
     return (
-        <SafeAreaView style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity
-                    style={styles.backButton}
-                    onPress={() => navigation.goBack()}
-                    activeOpacity={0.7}
-                >
-                    <Icon name="arrow-back" size={24} color={Theme.color.COLOR_TEXT} />
-                </TouchableOpacity>
-                <View style={styles.headerTitleContainer}>
-                    <SmallText textStyles={styles.headerTitle} size={4.2} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
-                        Verification Results
-                    </SmallText>
-                </View>
-                {halalStatus ? (
-                    <TouchableOpacity
-                        style={styles.backButton}
-                        onPress={handleShare}
-                        activeOpacity={0.7}
-                    >
-                        <Icon name="share-social-outline" size={22} color={Theme.color.COLOR_TEXT} />
-                    </TouchableOpacity>
-                ) : (
-                    <View style={styles.backButton} />
-                )}
-            </View>
-
-            <ScrollView
-                style={styles.content}
+        <View style={styles.container}>
+            <ScreenWrapper
+                showHeader={true}
+                headerTitle="Verification Results"
+                onBackPress={() => navigation.goBack()}
+                rightIcon={halalStatus ? <Icon name="share-social-outline" size={22} color={Theme.color.COLOR_TEXT} /> : undefined}
+                onRightIconPress={halalStatus ? handleShare : undefined}
+                scrollEnabled={true}
+                backgroundColor={Theme.color.COLOR_BG}
                 contentContainerStyle={styles.contentContainer}
-                showsVerticalScrollIndicator={false}
                 onScroll={handleScroll}
                 scrollEventThrottle={16}
             >
@@ -384,7 +358,7 @@ function IngredientsResult() {
                         contentContainerStyle={styles.imagesCarouselContent}
                     >
                         {frontImage && (
-                            <View style={[styles.imageCard, Theme.shadows.sh_card]}>
+                            <View style={[styles.imageCard, isSingleImage && { width: width(91) }, Theme.shadows.sh_card]}>
                                 <Image source={{ uri: frontImage }} style={styles.capturedImage} resizeMode="cover" />
                                 <View style={styles.imageOverlay}>
                                     <Icon name="camera" size={14} color={Theme.color.COLOR_WHITE} />
@@ -393,7 +367,7 @@ function IngredientsResult() {
                             </View>
                         )}
                         {backImage && (
-                            <View style={[styles.imageCard, Theme.shadows.sh_card]}>
+                            <View style={[styles.imageCard, isSingleImage && { width: width(91) }, Theme.shadows.sh_card]}>
                                 <Image source={{ uri: backImage }} style={styles.capturedImage} resizeMode="cover" />
                                 <View style={styles.imageOverlay}>
                                     <Icon name="camera" size={14} color={Theme.color.COLOR_WHITE} />
@@ -402,7 +376,7 @@ function IngredientsResult() {
                             </View>
                         )}
                         {ingredientsImage && (
-                            <View style={[styles.imageCard, Theme.shadows.sh_card]}>
+                            <View style={[styles.imageCard, isSingleImage && { width: width(91) }, Theme.shadows.sh_card]}>
                                 <Image source={{ uri: ingredientsImage }} style={styles.capturedImage} resizeMode="cover" />
                                 <View style={styles.imageOverlay}>
                                     <Icon name="camera" size={14} color={Theme.color.COLOR_WHITE} />
@@ -411,7 +385,7 @@ function IngredientsResult() {
                             </View>
                         )}
                         {!frontImage && !backImage && !ingredientsImage && imageUri && (
-                            <View style={[styles.imageCard, Theme.shadows.sh_card]}>
+                            <View style={[styles.imageCard, isSingleImage && { width: width(91) }, Theme.shadows.sh_card]}>
                                 <Image source={{ uri: imageUri }} style={styles.capturedImage} resizeMode="cover" />
                                 <View style={styles.imageOverlay}>
                                     <Icon name="camera" size={14} color={Theme.color.COLOR_WHITE} />
@@ -536,11 +510,36 @@ function IngredientsResult() {
                                 </View>
                             )}
 
+                            {/* Help Us Improve Button (If Doubtful status exists) */}
+                            {(halalStatus.overall_status?.toLowerCase() === 'musbooh' ||
+                                halalStatus.overall_status?.toLowerCase() === 'mushbooh' ||
+                                halalStatus.overall_status?.toLowerCase() === 'doubtful' ||
+                                halalStatus.overall_status?.toLowerCase() === 'doubt') && (
+                                    <TouchableOpacity
+                                        style={styles.improveButtonOutline}
+                                        onPress={() => setIsImproveModalVisible(true)}
+                                        activeOpacity={0.7}
+                                    >
+                                        <View style={styles.improveButtonIconContainer}>
+                                            <Icon name="cloud-upload" size={18} color={Theme.color.COLOR_PRIMARY_GREEN} />
+                                        </View>
+                                        <View style={{ flex: 1 }}>
+                                            <SmallText textStyles={styles.improveButtonText} size={3.4} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                                                Help us improve this scan
+                                            </SmallText>
+                                            <SmallText textStyles={styles.improveButtonSub} size={2.8} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM}>
+                                                Add barcode, manufacturer & extra photos
+                                            </SmallText>
+                                        </View>
+                                        <Icon name="add" size={20} color={Theme.color.COLOR_PRIMARY_GREEN} />
+                                    </TouchableOpacity>
+                                )}
+
                             {/* AI reasoning Accordion Card */}
                             {halalStatus.reasoning && (
                                 <View style={[styles.accordionCard, Theme.shadows.sh_card]}>
-                                    <TouchableOpacity 
-                                        style={styles.accordionHeader} 
+                                    <TouchableOpacity
+                                        style={styles.accordionHeader}
                                         onPress={() => setReasonOpen(!reasonOpen)}
                                         activeOpacity={0.7}
                                     >
@@ -555,10 +554,10 @@ function IngredientsResult() {
                                                 Why this verdict?
                                             </SmallText>
                                         </View>
-                                        <Icon 
-                                            name={reasonOpen ? "chevron-up" : "chevron-down"} 
-                                            size={20} 
-                                            color={Theme.color.COLOR_MUTED} 
+                                        <Icon
+                                            name={reasonOpen ? "chevron-up" : "chevron-down"}
+                                            size={20}
+                                            color={Theme.color.COLOR_MUTED}
                                         />
                                     </TouchableOpacity>
                                     {reasonOpen && (
@@ -660,10 +659,10 @@ function IngredientsResult() {
                                                         </View>
 
                                                         {hasNote && (
-                                                            <Icon 
-                                                                name={isExpanded ? "chevron-up" : "chevron-down"} 
-                                                                size={16} 
-                                                                color={Theme.color.COLOR_MUTED_2} 
+                                                            <Icon
+                                                                name={isExpanded ? "chevron-up" : "chevron-down"}
+                                                                size={16}
+                                                                color={Theme.color.COLOR_MUTED_2}
                                                                 style={{ marginLeft: 6 }}
                                                             />
                                                         )}
@@ -683,48 +682,27 @@ function IngredientsResult() {
                                 </View>
                             )}
 
-                            {/* Help Us Improve Button (If Doubtful status exists) */}
-                            {(halalStatus.overall_status?.toLowerCase() === 'musbooh' || 
-                              halalStatus.overall_status?.toLowerCase() === 'mushbooh' || 
-                              halalStatus.overall_status?.toLowerCase() === 'doubtful' ||
-                              halalStatus.overall_status?.toLowerCase() === 'doubt') && (
-                                <TouchableOpacity 
-                                    style={styles.improveButtonOutline}
-                                    onPress={() => setIsImproveModalVisible(true)}
-                                    activeOpacity={0.7}
-                                >
-                                    <View style={styles.improveButtonIconContainer}>
-                                        <Icon name="cloud-upload" size={18} color={Theme.color.COLOR_PRIMARY_GREEN} />
-                                    </View>
-                                    <View style={{ flex: 1 }}>
-                                        <SmallText textStyles={styles.improveButtonText} size={3.4} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
-                                            Help us improve this scan
-                                        </SmallText>
-                                        <SmallText textStyles={styles.improveButtonSub} size={2.8} fontFamily={Theme.fonts.FONT_NUNITO_MEDIUM}>
-                                            Add barcode, manufacturer & extra photos
-                                        </SmallText>
-                                    </View>
-                                    <Icon name="add" size={20} color={Theme.color.COLOR_PRIMARY_GREEN} />
-                                </TouchableOpacity>
-                            )}
+
                         </>
                     ) : null}
                 </View>
 
                 {/* Bottom Action Button */}
-                <View style={styles.actionsContainer}>
-                    <TouchableOpacity
-                        style={[styles.primaryButton, Theme.shadows.sh_button]}
-                        onPress={() => navigation.goBack()}
-                        activeOpacity={0.8}
-                    >
-                        <Icon name="scan" size={20} color={Theme.color.COLOR_WHITE} style={styles.buttonIcon} />
-                        <SmallText textStyles={styles.primaryButtonText} size={3.6} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
-                            Scan Another Product
-                        </SmallText>
-                    </TouchableOpacity>
-                </View>
-            </ScrollView>
+                {!isCheckingHalal && halalStatus && (
+                    <View style={styles.actionsContainer}>
+                        <TouchableOpacity
+                            style={[styles.primaryButton, Theme.shadows.sh_button]}
+                            onPress={() => navigation.goBack()}
+                            activeOpacity={0.8}
+                        >
+                            <Icon name="scan" size={20} color={Theme.color.COLOR_WHITE} style={styles.buttonIcon} />
+                            <SmallText textStyles={styles.primaryButtonText} size={3.6} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
+                                Scan Another Product
+                            </SmallText>
+                        </TouchableOpacity>
+                    </View>
+                )}
+            </ScreenWrapper>
 
             {/* Improvement Modal - Premium Dark Emerald Glassmorphic Sheet */}
             <Modal
@@ -737,7 +715,7 @@ function IngredientsResult() {
                     <View style={styles.modalContent}>
                         {/* Pull notch */}
                         <View style={styles.modalNotch} />
-                        
+
                         <View style={styles.modalHeader}>
                             <View style={styles.modalIconContainer}>
                                 <Icon name="help-buoy" size={26} color={Theme.color.COLOR_WHITE} />
@@ -757,56 +735,12 @@ function IngredientsResult() {
 
                         <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: height(50) }}>
                             <SmallText textStyles={styles.modalDescription} size={3.2} fontFamily={Theme.fonts.FONT_NUNITO_REGULAR}>
-                                Capture or choose clear photos of the barcode and manufacturer info to help our AI verify this product accurately.
+                                Capture or choose clear photos of the front, back, or other supporting details of the product to help verify it accurately.
                             </SmallText>
 
                             <View style={styles.specificImageSection}>
-                                <TouchableOpacity 
-                                    style={[styles.specificImageRow, barcodeImage && styles.specificImageRowActive]} 
-                                    onPress={() => handleCaptureImage('barcode')}
-                                    activeOpacity={0.7}
-                                >
-                                    <View style={{ flex: 1 }}>
-                                        <SmallText textStyles={styles.fieldLabel} size={3.5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
-                                            Barcode Image
-                                        </SmallText>
-                                        <SmallText textStyles={styles.fieldSubLabel} size={2.8} fontFamily={Theme.fonts.FONT_NUNITO_REGULAR}>
-                                            Capture the product barcode clearly
-                                        </SmallText>
-                                    </View>
-                                    <View style={[styles.captureButton, barcodeImage && styles.captureButtonActive]}>
-                                        {barcodeImage ? (
-                                            <Image source={{ uri: barcodeImage }} style={styles.previewThumbnail} />
-                                        ) : (
-                                            <Icon name="barcode" size={22} color={Theme.color.COLOR_WHITE} />
-                                        )}
-                                    </View>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity 
-                                    style={[styles.specificImageRow, manufacturerImage && styles.specificImageRowActive]} 
-                                    onPress={() => handleCaptureImage('manufacturer')}
-                                    activeOpacity={0.7}
-                                >
-                                    <View style={{ flex: 1 }}>
-                                        <SmallText textStyles={styles.fieldLabel} size={3.5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
-                                            Manufacturer Info
-                                        </SmallText>
-                                        <SmallText textStyles={styles.fieldSubLabel} size={2.8} fontFamily={Theme.fonts.FONT_NUNITO_REGULAR}>
-                                            Photo of brand, certification logo, or contact info
-                                        </SmallText>
-                                    </View>
-                                    <View style={[styles.captureButton, manufacturerImage && styles.captureButtonActive]}>
-                                        {manufacturerImage ? (
-                                            <Image source={{ uri: manufacturerImage }} style={styles.previewThumbnail} />
-                                        ) : (
-                                            <Icon name="business" size={22} color={Theme.color.COLOR_WHITE} />
-                                        )}
-                                    </View>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity 
-                                    style={[styles.specificImageRow, frontImageImprove && styles.specificImageRowActive]} 
+                                <TouchableOpacity
+                                    style={[styles.specificImageRow, frontImageImprove && styles.specificImageRowActive]}
                                     onPress={() => handleCaptureImage('front')}
                                     activeOpacity={0.7}
                                 >
@@ -827,8 +761,8 @@ function IngredientsResult() {
                                     </View>
                                 </TouchableOpacity>
 
-                                <TouchableOpacity 
-                                    style={[styles.specificImageRow, backImageImprove && styles.specificImageRowActive]} 
+                                <TouchableOpacity
+                                    style={[styles.specificImageRow, backImageImprove && styles.specificImageRowActive]}
                                     onPress={() => handleCaptureImage('back')}
                                     activeOpacity={0.7}
                                 >
@@ -852,13 +786,13 @@ function IngredientsResult() {
 
                             <View style={styles.additionalImagesSection}>
                                 <SmallText textStyles={styles.fieldLabel} size={3.5} fontFamily={Theme.fonts.FONT_NUNITO_EXTRABOLD}>
-                                    Other Supporting Photos
+                                    Other Images
                                 </SmallText>
                                 <View style={styles.additionalImagesGrid}>
                                     {additionalImages.map((uri, index) => (
                                         <View key={index} style={styles.additionalImageWrapper}>
                                             <Image source={{ uri }} style={styles.additionalImage} />
-                                            <TouchableOpacity 
+                                            <TouchableOpacity
                                                 style={styles.removeImageButton}
                                                 onPress={() => setAdditionalImages(additionalImages.filter((_, i) => i !== index))}
                                             >
@@ -877,7 +811,7 @@ function IngredientsResult() {
                         </ScrollView>
 
                         <View style={styles.modalFooter}>
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 style={[styles.modalSubmitButton, isSubmittingImprovement && { opacity: 0.7 }]}
                                 onPress={handleSubmitImprovement}
                                 disabled={isSubmittingImprovement}
@@ -897,7 +831,7 @@ function IngredientsResult() {
                     </View>
                 </View>
             </Modal>
-        </SafeAreaView>
+        </View>
     );
 }
 
@@ -908,7 +842,7 @@ const styles = StyleSheet.create({
     },
     header: {
         alignItems: 'center',
-        backgroundColor: Theme.color.COLOR_WHITE,
+        // backgroundColor: Theme.color.COLOR_WHITE,
         borderBottomColor: Theme.color.COLOR_BORDER,
         borderBottomWidth: 1,
         flexDirection: 'row',
@@ -1247,7 +1181,7 @@ const styles = StyleSheet.create({
         borderWidth: 1.5,
         flexDirection: 'row',
         gap: 12,
-        marginTop: height(1),
+        marginBottom: height(2.5),
         padding: 16,
     },
     improveButtonIconContainer: {
