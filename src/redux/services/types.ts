@@ -23,6 +23,7 @@ export interface User {
     name: string;
     email: string;
     points?: number;
+    fcm_token?: string;
 }
 
 export interface UpdateUserRequest {

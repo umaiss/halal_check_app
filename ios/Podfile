@@ -9,6 +9,14 @@ platform :ios, '16.0'
 prepare_react_native_project!
 
 target 'scan bazar' do
+  # Specific Firebase pods that require modular headers
+  pod 'FirebaseCore', :modular_headers => true
+  pod 'FirebaseCoreInternal', :modular_headers => true
+  pod 'FirebaseCoreExtension', :modular_headers => true
+  pod 'FirebaseInstallations', :modular_headers => true
+  pod 'FirebaseMessaging', :modular_headers => true
+  pod 'GoogleUtilities', :modular_headers => true
+
   config = use_native_modules!
 
   use_react_native!(

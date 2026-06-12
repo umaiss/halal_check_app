@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "265184256244",
+    "project_id": "scan-bazar-22f0e",
+    "storage_bucket": "scan-bazar-22f0e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:265184256244:android:a3c3b6c98ec587f9157ea1",
+        "android_client_info": {
+          "package_name": "com.scanbazar.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB5JnIvnhItsOfRnAogouZEmXsg9n1D-qQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

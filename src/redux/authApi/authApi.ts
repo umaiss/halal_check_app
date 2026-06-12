@@ -70,6 +70,13 @@ export const authApi = createApi({
                 }
             }
         }),
+        registerFcmToken: builder.mutation<{ message: string }, { fcm_token: string }>({
+            query: (body) => ({
+                url: "api/auth/fcm-token",
+                method: "POST",
+                data: body,
+            }),
+        }),
     }),
 });
 
@@ -82,4 +89,5 @@ export const {
     useResetPasswordMutation,
     useDeleteAccountMutation,
     useGetProfileQuery,
+    useRegisterFcmTokenMutation,
 } = authApi;
